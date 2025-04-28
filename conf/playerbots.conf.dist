@@ -82,6 +82,7 @@ AiPlayerbot.Enabled = 1
 AiPlayerbot.RandomBotAutologin = 1
 
 # Random bot count
+#允许的最少和最多随机bots
 AiPlayerbot.MinRandomBots = 500
 AiPlayerbot.MaxRandomBots = 500
 
@@ -89,7 +90,8 @@ AiPlayerbot.MaxRandomBots = 500
 # If you are not using any expansion at all, you may have to set this manually, then
 # please ensure that RandomBotAccountCount is at least greater than (MaxRandomBots / 10 + AddClassAccountPoolSize)
 # default: 0 - Automatic
-AiPlayerbot.RandomBotAccountCount = 0
+#playerbot帐号的数量（每个帐号会自动创建10个bot角色），默认500
+AiPlayerbot.RandomBotAccountCount = 500
 
 # Delete all random bot accounts (reset randombots)
 AiPlayerbot.DeleteRandomBotAccounts = 0
@@ -114,13 +116,15 @@ AiPlayerbot.MaxAddedBots = 40
 
 # Enable/Disable create bot by addclass command (0 = GM only, 1 = enable)
 # default: 1 (enable)
-AiPlayerbot.AddClassCommand = 1
+#启用/禁用addclass命令来创建bot (0 = 仅GM可用, 1 = Enable 所有玩家可用)
+AiPlayerbot.AddClassCommand = 0
 
 # Set the addclass command account pool size
 AiPlayerbot.AddClassAccountPoolSize = 50
 
 # Bot group invitation permission level (0 = GM only, 1 = accept based on level, 2 = always accept)
 # default: 1 (accept based on level)
+#组队邀请权限级别
 AiPlayerbot.GroupInvitationPermission = 1
 
 # auto-login all player alts as bots on player login
@@ -130,10 +134,11 @@ AiPlayerbot.BotAutologin = 0
 AiPlayerbot.AllowAccountBots = 1
 
 # Allow/deny bots in the player's guild
+#允许/拒绝机器人进入你的公会
 AiPlayerbot.AllowGuildBots = 1
 
 # Random bot guild count
-AiPlayerbot.RandomBotGuildCount = 20
+AiPlayerbot.RandomBotGuildCount = 5
 
 # Delete all random bot guilds
 AiPlayerbot.DeleteRandomBotGuilds = 0
@@ -148,10 +153,12 @@ AiPlayerbot.RandomBotInvitePlayer = 0
 AiPlayerbot.InviteChat = 0
 
 # Bots will be summoned to player when accept group invitation
+#组队时是否召唤bot到面前
 AiPlayerbot.SummonWhenGroup = 1
 
 # Added following config
 # Selfbot permission level (0 = disabled, 1 = gm only (default), 2 = all players, 3 = activate on login)
+#可拥有私有机器人的权限等级？
 AiPlayerbot.SelfBotLevel = 1
 
 # Give free food to bots
@@ -160,14 +167,17 @@ AiPlayerbot.FreeFood = 1
 
 # Non-GM player can only use init=auto to initialize bots based on their own level and gear score
 # default: 0 (non-gm player can use any intialization commands)
-AiPlayerbot.AutoInitOnly = 0
+#普通玩家仅能使用根据玩家的等级和装等自动初始化的机器人
+AiPlayerbot.AutoInitOnly = 1
 
 # The upper limit ratio of bot equipment level for init=auto
 # default: 1.0 (same with the player)
+#自动初始化的机器人的装备等级和玩家装备的最高比例，1.0就是和玩家装等一致
 AiPlayerbot.AutoInitEquipLevelLimitRatio = 1.0
 
 # Bot automatically trains spells when talking to trainer (yes = train all available spells as long as the bot has the money, free = auto trains with no money cost, no = only list spells)
-AiPlayerbot.AutoTrainSpells = yes
+#机器人和训练师对话时，是否学习技能，yes=有钱就都学所有可学的技能，free=免费学习，no=不学
+AiPlayerbot.AutoTrainSpells = free
 
 #
 #
@@ -197,6 +207,7 @@ AiPlayerbot.ReviveBotWhenSummoned = 1
 
 # Enable/Disable bot repair gear when summon (0 = no, 1 = yes)
 # default: 1
+#启用/禁用在机器人被召唤时复活和修装备(0 =从不，1 =启用非战斗和活着时，2 =启用总是)
 AiPlayerbot.BotRepairWhenSummon = 1
 
 #
@@ -240,15 +251,19 @@ AiPlayerbot.UseFastFlyMountAtMinLevel = 70
 #
 
 # Show helmet and cloak on randombots (reset required)
+#显示机器人的头盔和披风
 AiPlayerbot.RandomBotShowHelmet = 1
 AiPlayerbot.RandomBotShowCloak = 1
 
 # Bots equip upgrades (Bots will equip any item obtained from looting or a quest if they are upgrades)
 # Default: 1 (enable)
+#如果机器人获得了更好的装备，是否穿上它
 AiPlayerbot.AutoEquipUpgradeLoot = 1
 
 # Equip upgrade threshold for auto equip upgrade
 # Default: 1.1 (Equip when the equipment score is 1.1 times higher than the current)
+#装备自动换上的阈值
+#默认值:1.1(装备分数是当前装备1.1倍时)
 AiPlayerbot.EquipUpgradeThreshold = 1.1
 
 # Two rounds of equipment initialization to create more suitable gear
@@ -269,10 +284,12 @@ AiPlayerbot.SayWhenCollectingItems = 1
 
 # Bots keep looting when group loop method is free for all
 # Default: 0 (disabled)
+#当队伍的分配方式是自由拾取时，机器人会拾取物品
 AiPlayerbot.FreeMethodLoot = 0
 
 # Bots loot roll level (0 = pass, 1 = greed, 2 = need)
 # Default: 1 (greed)
+#机器人roll的类型：0=放弃，1=贪婪，2=需求
 AiPlayerbot.LootRollLevel = 1
 
 #
@@ -286,12 +303,15 @@ AiPlayerbot.LootRollLevel = 1
 #
 
 # Max AI iterations per tick
+#每秒最大的AI迭代
 AiPlayerbot.IterationsPerTick = 10
 
 # Delay between two short-time spells cast
+#两个短法术施法之间的延迟：500毫秒
 AiPlayerbot.GlobalCooldown = 500
 
 # Max wait time when moving
+#移动时最大的等待时长：5秒=5000
 AiPlayerbot.MaxWaitForMove = 5000
 
 # Disables use of MoveSplinePath for bot movement, will result in more erratic bot movement but means stun/snare/root/etc
@@ -303,25 +323,32 @@ AiPlayerbot.DisableMoveSplinePath = 0
 
 # Max search time for movement (higher for better movement on slopes)
 # default: 3
+#移动的最大搜索次数？(更高的坡度，更好的移动)
 AiPlayerbot.MaxMovementSearchTime = 3
 
 # Action expiration time
+#动作失效时间
 AiPlayerbot.ExpireActionTime = 5000
 
 # Max dispel auras duration
+#最大驱散光环的持续时间？
 AiPlayerbot.DispelAuraDuration = 700
 
 # Delay between two bot actions
+#两个机器人动作之间的延迟时间
 AiPlayerbot.ReactDelay = 100
 
 # Dynamically adjust react delay for bots in different status to reduce server lags
+#动态调整机器人在不同状态下的反应延迟，以减少服务器延迟
 AiPlayerbot.DynamicReactDelay = 1
 
 # Inactivity delay
+#发呆的延迟时间
 AiPlayerbot.PassiveDelay = 10000
 
 # Minimum delay between repeating actions (chat messages, emotes etc)
-AiPlayerbot.RepeatDelay = 2000
+#重复动作之间的最小延迟(聊天消息，表情等)
+AiPlayerbot.RepeatDelay = 5000
 
 # Delay timers
 AiPlayerbot.ErrorDelay = 100
@@ -340,7 +367,7 @@ AiPlayerbot.LootDelay = 1000
 # DISTANCES
 #
 #
-
+# Distances距离设置
 AiPlayerbot.FarDistance = 20.0
 AiPlayerbot.SightDistance = 75.0
 AiPlayerbot.SpellDistance = 28.5
@@ -393,14 +420,17 @@ AiPlayerbot.HighMana = 65
 #
 
 # Bots pick their quest reward (yes = picks the most useful item, no = list all rewards, ask = pick useful item and lists if multiple)
+#机器人选择任务奖励物品的方式
 AiPlayerbot.AutoPickReward = yes
 
 # Sync quests with player (Bots will complete quests the moment you hand them in. Bots will ignore looting quest items.)
 # Default: 1 (enable)
+#在你交任务的一刻，机器人也会自动完成该任务，机器人不会拾取任务物品？
 AiPlayerbot.SyncQuestWithPlayer = 1
 
 # Bots will auto-complete quests for the player when handing in
 # Default: 0 (disabled)
+#机器人在交任务时，会帮玩家自动完成任务？
 AiPlayerbot.SyncQuestForPlayer = 0
 
 # Bots will drop obsolete quests
@@ -432,13 +462,16 @@ AiPlayerbot.AoeAvoidSpellWhitelist = 50759,57491,13810
 
 # Enable healer bot save mana
 # Default: 1 (enable)
+#治疗职业机器人启动省蓝模式
 AiPlayerbot.AutoSaveMana = 1
 
 # Healer bot save mana threshold
 # Default: 60 (60%)
+#治疗职业机器人省蓝的阈值默认60%
 AiPlayerbot.SaveManaThreshold = 60
 
 # Bot can flee for enemy
+#机器人会从敌人处逃走
 AiPlayerbot.FleeingEnabled = 1
 
 #
@@ -453,6 +486,7 @@ AiPlayerbot.FleeingEnabled = 1
 
 # Enable/Disable maintenance command, learn all available spells and skills, supplement consumables, repair, etc.
 # default: 1 (enable)
+#启用/禁用维护命令，如：学习所有可用的法术和技能，补充消耗品，修理等命令。
 AiPlayerbot.MaintenanceCommand = 1
 
 # Enable/Disable autogear command, auto upgrade player bots gears, the quality is limited by AutoGearQualityLimit and AutoGearScoreLimit
@@ -472,6 +506,7 @@ AiPlayerbot.AutoGearQualityLimit = 3
 AiPlayerbot.AutoGearScoreLimit = 0
 
 # Enables/Disables bot cheating
+#启用/禁用bot作弊，就是飞行点全开？
 AiPlayerbot.BotCheats = "taxi"
 
 #
@@ -485,6 +520,7 @@ AiPlayerbot.BotCheats = "taxi"
 #
 
 # ID of spell to open lootable chests
+#打开箱子的技能ID
 AiPlayerbot.OpenGoSpell = 6477
 
 #
@@ -504,7 +540,8 @@ AiPlayerbot.OpenGoSpell = 6477
 #
 
 # Enables/Disables password to bot account
-AiPlayerbot.RandomBotRandomPassword = 0
+#启用/禁用bot帐号的密码，如果是0，bot帐号能直接用帐号名当密码登录进去
+AiPlayerbot.RandomBotRandomPassword = 1
 
 # Accounts to create for random bots
 AiPlayerbot.RandomBotAccountPrefix = "rndbot"
@@ -514,12 +551,14 @@ AiPlayerbot.RandomBotMaxLevel = 80
 
 # Sync max random bot level with max level of online players
 # Default: 0 (disabled)
+#同步机器人的最大等级为在线玩家的最大等级
 AiPlayerbot.SyncLevelWithPlayers = 0
 
 # Mark many quests <= Bot level as complete (slows down bot creation)
 AiPlayerbot.PreQuests = 0
 
 # Enable LFG for random bots
+#bot自动排随机副本
 AiPlayerbot.RandomBotJoinLfg = 1
 
 # Enable/Disable periodic online - offline to mimic the real-world scenario where not all players are online simultaneously
@@ -558,9 +597,11 @@ AiPlayerbot.EnableRandomBotTrading = 1
 
 # Disable random levels for randombots
 # Every bots started on the specified level and level up by killing mobs.
-AiPlayerbot.DisableRandomLevels = 0
+#禁用随机级别，所有机器人从指定的级别开始，自己杀怪升级
+AiPlayerbot.DisableRandomLevels = 1
 
 # Set randombots starting level here if "AiPlayerbot.DisableRandomLevels" enabled
+#搭配上面一个DisableRandomLevels的设置，这里是机器人的起始等级
 AiPlayerbot.RandombotStartingLevel = 1
 
 # Chance random bot has min level on first randomize (default 0.1)
@@ -596,6 +637,7 @@ AiPlayerbot.RandomGearScoreLimit = 0
 
 # Set minimum level of randombots where gets enchants on items (Maxlevel + 1 to disable)
 # Default: 60
+#多少级以上的机器人才有装备附魔，如果禁止掉该项，就设置为最大级别+1
 AiPlayerbot.MinEnchantingBotLevel = 60
 
 # Enable expansion limitation for enchants - ie: level <= 60 bot only uses enchants
@@ -609,14 +651,17 @@ AiPlayerbot.LimitEnchantExpansion = 1
 AiPlayerbot.LimitGearExpansion = 1
 
 # Change random bot has lower gear
-AiPlayerbot.RandomGearLoweringChance = 0
+#机器人有低装备等级的几率
+AiPlayerbot.RandomGearLoweringChance = 1
 
 # Randombots checking players gear score level and deny the group invite if it's too low
 # Default: 0 (disabled)
-AiPlayerbot.GearScoreCheck = 0
+#随机机器人检查玩家的装备得分水平，如果分数太低就拒绝团队邀请
+AiPlayerbot.GearScoreCheck = 1
 
 # Enable/Disable bot equipments persistence (stop random initialization) after certain level (EquipmentPersistenceLevel)
 # default: 0 (disable)
+#在达到一定级别：EquipmentPersistenceLevel 后启用/禁用bot装备持久性(停止随机初始化)
 AiPlayerbot.EquipmentPersistence = 0
 
 # default: 80
@@ -624,6 +669,7 @@ AiPlayerbot.EquipmentPersistenceLevel = 80
 
 # Randombots automatically upgrade equipments on levelup
 # Default: 1 (enabled)
+#机器人升级后自动升级装备？
 AiPlayerbot.AutoUpgradeEquip = 1
 
 # Only set wolf pets for hunters to have higher damage (0 = disabled, 1 = enabled only for max-level, 2 = enabled)
@@ -645,6 +691,7 @@ AiPlayerbot.HunterWolfPet = 0
 # is enabled. Regardless, this value is only applied to inactive areas where no real-players
 # are detected. When real-players are nearby, friend, group, guild, BGs, instances etc,
 # the value is always enforced to 100%
+#指定活动机器人的百分比，默认是100
 AiPlayerbot.BotActiveAlone = 100
 
 # Force botActiveAlone when bot is ... of real player
@@ -681,13 +728,17 @@ AiPlayerbot.botActiveAloneSmartScaleWhenMaxLevel = 80
 #
 
 # Quest that will be completed and rewarded to all random bots
+#这些任务所有机器人是已完成的状态（深渊门，通灵门，黑龙门，MC门，BWL门任务）
+#                                   7848,3802,5505,6502,7761
 AiPlayerbot.RandomBotQuestIds = "7848,3802,5505,6502,7761,10277,10285,11492,24499,24511,24710,24712"
 
 # Randombots will group with nearby bots to do shared quests
+#附近的机器人自动组队来一起做任务
 AiPlayerbot.RandomBotGroupNearby = 0
 
 # Random Bots will pick quests on their own and try to complete
 # Default: 1 (enabled)
+#随机机器人将选择自己的任务，并尝试完成
 AiPlayerbot.AutoDoQuests = 1
 
 # Random Bots will behave more like real players (exprimental)
@@ -696,6 +747,7 @@ AiPlayerbot.AutoDoQuests = 1
 AiPlayerbot.EnableNewRpgStrategy = 1
 
 # Quest items to leave (do not destroy)
+#机器人需要保留的任务物品：炉石，图腾，各种任务获得的钥匙
 AiPlayerbot.RandomBotQuestItems = "6948,5175,5176,5177,5178,16309,12382,13704,11000"
 
 #
@@ -710,17 +762,21 @@ AiPlayerbot.RandomBotQuestItems = "6948,5175,5176,5177,5178,16309,12382,13704,11
 
 # Randombots automatically learn classquest reward spells on levelup
 # Default: 0 (disabled)
-AiPlayerbot.AutoLearnQuestSpells = 0
+#机器人会自动学习职业任务奖励的技能
+AiPlayerbot.AutoLearnQuestSpells = 1
 
 # Randombots automatically learn trainable spells on levelup
 # Default: 1 (enabled)
+#机器人在升级时会自动学习可训练的法术
 AiPlayerbot.AutoLearnTrainerSpells = 1
 
 # Randombots automatically picks talent points on levelup
 # Default: 1 (enabled)
+#机器人升级后自动点天赋
 AiPlayerbot.AutoPickTalents = 1
 
 # Spells every random bot will learn on randomize (54197 - cold weather flying)
+#所有机器人初始化时，都会学习的技能（寒冷飞行）
 AiPlayerbot.RandomBotSpellIds = "54197"
 
 #
@@ -734,6 +790,7 @@ AiPlayerbot.RandomBotSpellIds = "54197"
 #
 
 # Random bot default strategies (applied after defaults)
+#机器人的默认策略
 AiPlayerbot.RandomBotCombatStrategies = "+dps,+dps assist,-threat"
 # AiPlayerbot.RandomBotNonCombatStrategies = "+grind,+loot,+rpg,+custom::say"
 AiPlayerbot.RandomBotNonCombatStrategies = ""
@@ -751,21 +808,25 @@ AiPlayerbot.NonCombatStrategies = ""
 #
 
 # Maps where bots can be teleported to
+#机器人可以被传送到的地图id
 AiPlayerbot.RandomBotMaps = 0,1,530,571
 
 # Probabilty bots teleport to banker (city)
 # default: 0.25
+#机器人被传送到主城银行的几率
 AiPlayerbot.ProbTeleToBankers = 0.25
 
 # How far random bots are teleported after death
 AiPlayerbot.RandomBotTeleportDistance = 100
 
 # Level diff between random bots and nearby creatures for random teleports
+#随机传送时随机机器人和附近生物的等级差异，怪比机器人低=3级内，高=1级内
 AiPlayerbot.RandomBotTeleLowerLevel = 3
 AiPlayerbot.RandomBotTeleHigherLevel = 1
 
 # Bots automatically teleport to another place for leveling on levelup
 # Default: 1 (enabled)
+#机器人升级后会自动传送到另一个地方进行升级
 AiPlayerbot.AutoTeleportForLevel = 1
 
 #
@@ -782,7 +843,8 @@ AiPlayerbot.AutoTeleportForLevel = 1
 AiPlayerbot.RandomBotJoinBG = 1
 
 # Enable Auto join BG - have bots start BG's and Arenas on their own
-AiPlayerbot.RandomBotAutoJoinBG = 0
+#bots自动加入战场，竞技场
+AiPlayerbot.RandomBotAutoJoinBG = 1
 
 # Required Configuration for RandomBotAutoJoinBG
 #
@@ -854,9 +916,11 @@ AiPlayerbot.RandomBotArenaTeamMinRating = 1000
 AiPlayerbot.DeleteRandomBotArenaTeams = 0
 
 # PvP Restricted Zones (bots don't pvp)
+#机器人的PVP Zones禁
 AiPlayerbot.PvpProhibitedZoneIds = "2255,656,2361,2362,2363,976,35,2268,3425,392,541,1446,3828,3712,3738,3565,3539,3623,4152,3988,4658,4284,4418,4436,4275,4323,4395,3703,4298,139"
 
 # PvP Restricted Areas (bots don't pvp)
+#机器人的PVP Areas禁区(
 AiPlayerbot.PvpProhibitedAreaIds = "976,35,392,2268,4161,4010,4317,4312"
 
 # Improve react speed in battleground and arena (may cause lag)
@@ -871,7 +935,7 @@ AiPlayerbot.FastReactInBG = 1
 # INTERVALS
 #
 #
-
+#间隔，单位秒
 # All In seconds
 AiPlayerbot.RandomBotUpdateInterval = 20
 AiPlayerbot.RandomBotCountChangeMinInterval = 1800
@@ -881,10 +945,16 @@ AiPlayerbot.MaxRandomBotInWorldTime = 28800
 AiPlayerbot.MinRandomBotRandomizeTime = 7200
 AiPlayerbot.MaxRandomBotRandomizeTime = 1209600
 AiPlayerbot.RandomBotsPerInterval = 60
+
+#机器人复活的时间间隔，默认60-300秒：1-5分钟
 AiPlayerbot.MinRandomBotReviveTime = 60
 AiPlayerbot.MaxRandomBotReviveTime = 300
+
+#机器人传送的间隔：默认3600-18000秒：1-5小时
 AiPlayerbot.MinRandomBotTeleportInterval = 3600
 AiPlayerbot.MaxRandomBotTeleportInterval = 18000
+
+#机器人没有被轮换的最大时间：默认31104000秒：360天
 AiPlayerbot.PermanantlyInWorldTime = 31104000
 
 #
@@ -908,7 +978,11 @@ AiPlayerbot.PermanantlyInWorldTime = 31104000
 # AiPlayerbot.PremadeSpecGlyph.<class>.<specno> = <major 1>,<minor 1>,<major 2>,<minor 2>,<minor 3>,<major 3>   #ItemId of the glyphs
 # e.g., formulate the link on https://www.wowhead.com/wotlk/talent-calc/warrior/3022032123335100202012013031251-32505010002
 # 0 <= specno < 20, 1 <= level <= 80
-
+#各职业，不同等级的天赋预制
+#PremadeSpecName：预制天赋的名字
+#PremadeSpecLink：天赋加点模拟器的编码
+#PremadeSpecGlyph：雕文的配置
+#天赋模拟器地址（外网）：https://www.wowhead.com/wotlk/talent-calc/warrior/3022032123335100202012013031251-32505010002
 #
 #
 #
@@ -918,15 +992,21 @@ AiPlayerbot.PermanantlyInWorldTime = 31104000
 # WARRIOR
 #
 #
-
+#战士预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/warrior/……
+#武器战
 AiPlayerbot.PremadeSpecName.1.0 = arms pve
 AiPlayerbot.PremadeSpecGlyph.1.0 = 43418,43395,43423,43399,49084,43421
 AiPlayerbot.PremadeSpecLink.1.0.60 = 3022032023335100002012211231241
 AiPlayerbot.PremadeSpecLink.1.0.80 = 3022032023335100102012213231251-305-2033
+
+#狂暴战
 AiPlayerbot.PremadeSpecName.1.1 = fury pve
 AiPlayerbot.PremadeSpecGlyph.1.1 = 43418,43395,43414,43399,49084,43432
 AiPlayerbot.PremadeSpecLink.1.1.60 = -305053000500310053120501351
 AiPlayerbot.PremadeSpecLink.1.1.80 = 32002300233-305053000500310153120511351
+
+#防战
 AiPlayerbot.PremadeSpecName.1.2 = prot pve
 AiPlayerbot.PremadeSpecGlyph.1.2 = 43424,43395,43425,43399,49084,45793
 AiPlayerbot.PremadeSpecLink.1.2.60 = --053351225000210521030113321
@@ -941,15 +1021,22 @@ AiPlayerbot.PremadeSpecLink.1.2.80 = 3500030023-301-053351225000210521030113321
 # PALADIN
 #
 #
+#圣骑士预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/paladin/……
 
+#奶骑
 AiPlayerbot.PremadeSpecName.2.0 = holy pve
 AiPlayerbot.PremadeSpecGlyph.2.0 = 41106,43367,45741,43369,43365,41109
 AiPlayerbot.PremadeSpecLink.2.0.60 = 50350151020013053100515221
 AiPlayerbot.PremadeSpecLink.2.0.80 = 50350152220013053100515221-503201312
+
+#防骑
 AiPlayerbot.PremadeSpecName.2.1 = prot pve
 AiPlayerbot.PremadeSpecGlyph.2.1 = 41099,43367,43869,43369,43365,45745
 AiPlayerbot.PremadeSpecLink.2.1.60 = -05005135203102311333112321
 AiPlayerbot.PremadeSpecLink.2.1.80 = -05005135203102311333312321-502302012003
+
+#惩戒骑
 AiPlayerbot.PremadeSpecName.2.2 = ret pve
 AiPlayerbot.PremadeSpecGlyph.2.2 = 41092,43367,41099,43369,43365,43869
 AiPlayerbot.PremadeSpecLink.2.2.60 = --05230051203331302133231131
@@ -965,15 +1052,22 @@ AiPlayerbot.PremadeSpecLink.2.2.80 = 050501-05-05232051203331302133231331
 # HUNTER
 #
 #
+#猎人预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/hunter/……
 
+#兽王猎
 AiPlayerbot.PremadeSpecName.3.0 = bm pve
 AiPlayerbot.PremadeSpecGlyph.3.0 = 42912,43350,42902,43351,43338,45732
 AiPlayerbot.PremadeSpecLink.3.0.60 = 51200201505112243110531051
 AiPlayerbot.PremadeSpecLink.3.0.80 = 51200201505112243120531251-025305101
+
+#射击猎
 AiPlayerbot.PremadeSpecName.3.1 = mm pve
 AiPlayerbot.PremadeSpecGlyph.3.1 = 42912,43350,42914,43351,43338,45732
 AiPlayerbot.PremadeSpecLink.3.1.60 = -025315101030013233125031051
 AiPlayerbot.PremadeSpecLink.3.1.80 = 502-025335101030013233135031351-5000002
+
+#生存猎
 AiPlayerbot.PremadeSpecName.3.2 = surv pve
 AiPlayerbot.PremadeSpecGlyph.3.2 = 42912,43350,45731,43351,43338,45732
 AiPlayerbot.PremadeSpecLink.3.2.60 = --5000032500033330502135201311
@@ -1000,15 +1094,22 @@ AiPlayerbot.PremadeHunterPetLink.2.20 = 21000203300002110221
 # ROGUE
 #
 #
+#盗贼预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/rogue/……
 
+#刺杀贼
 AiPlayerbot.PremadeSpecName.4.0 = as pve
 AiPlayerbot.PremadeSpecGlyph.4.0 = 45768,43379,45761,43380,43378,45766
 AiPlayerbot.PremadeSpecLink.4.0.60 = 005303104352100520103331051
 AiPlayerbot.PremadeSpecLink.4.0.80 = 005303104352100520103331051-005005005003-2
+
+#战斗贼
 AiPlayerbot.PremadeSpecName.4.1 = combat pve
 AiPlayerbot.PremadeSpecGlyph.4.1 = 42962,43379,45762,43380,43378,42969
 AiPlayerbot.PremadeSpecLink.4.1.60 = -0252051000035015223100501251
 AiPlayerbot.PremadeSpecLink.4.1.80 = 00532000523-0252051000035015223100501251
+
+#敏锐贼
 AiPlayerbot.PremadeSpecName.4.2 = subtlety pve
 AiPlayerbot.PremadeSpecGlyph.4.2 = 42967,43379,45764,43380,43378,45767
 AiPlayerbot.PremadeSpecLink.4.2.60 = --5022012030321121350115031151
@@ -1023,15 +1124,22 @@ AiPlayerbot.PremadeSpecLink.4.2.80 = 30532010114--5022012030321121350115031151
 # PRIEST
 #
 #
+#牧师预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/priest/……
 
+#戒律牧
 AiPlayerbot.PremadeSpecName.5.0 = disc pve
 AiPlayerbot.PremadeSpecGlyph.5.0 = 42408,43371,42400,43374,43342,45756
 AiPlayerbot.PremadeSpecLink.5.0.60 = 0503203130300512301323131051
 AiPlayerbot.PremadeSpecLink.5.0.80 = 0503203130300512331323231251-03520103
+
+#神牧
 AiPlayerbot.PremadeSpecName.5.1 = holy pve
 AiPlayerbot.PremadeSpecGlyph.5.1 = 42408,43371,42400,43374,43342,42396
 AiPlayerbot.PremadeSpecLink.5.1.60 = -035050031301152530000331331
 AiPlayerbot.PremadeSpecLink.5.1.80 = 05032031-235050032302152530000331351
+
+#暗牧
 AiPlayerbot.PremadeSpecName.5.2 = shadow pve
 AiPlayerbot.PremadeSpecGlyph.5.2 = 42406,43371,42407,43374,43342,42415
 AiPlayerbot.PremadeSpecLink.5.2.60 = --325003041203010323150301351
@@ -1046,19 +1154,28 @@ AiPlayerbot.PremadeSpecLink.5.2.80 = 0503203--325023051223010323152301351
 # DEATHKNIGHT
 #
 #
+#死亡骑士预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/death-knight/……
 
+#鲜血dk
 AiPlayerbot.PremadeSpecName.6.0 = blood pve
 AiPlayerbot.PremadeSpecGlyph.6.0 = 45805,43673,43827,43544,43672,43554
 AiPlayerbot.PremadeSpecLink.6.0.60 = 035502150300331320102013111-005
 AiPlayerbot.PremadeSpecLink.6.0.80 = 0355021533003313201020131351-005-005032
+
+#防护dk
 AiPlayerbot.PremadeSpecName.6.1 = frost pve
 AiPlayerbot.PremadeSpecGlyph.6.1 = 45805,43673,43547,43544,43672,43543
 AiPlayerbot.PremadeSpecLink.6.1.60 = -32003350332203012300023101351
 AiPlayerbot.PremadeSpecLink.6.1.80 = -32002350352203012300033101351-230200305003
+
+#邪恶dk
 AiPlayerbot.PremadeSpecName.6.2 = unholy pve
 AiPlayerbot.PremadeSpecGlyph.6.2 = 43542,43673,43546,43544,43672,43549
 AiPlayerbot.PremadeSpecLink.6.2.60 = --2301303050032151000150013131151
 AiPlayerbot.PremadeSpecLink.6.2.80 = -320033500002-2301303050032151000150013133151
+
+#双光环dk
 AiPlayerbot.PremadeSpecName.6.3 = double aura blood pve
 AiPlayerbot.PremadeSpecGlyph.6.3 = 45805,43673,43827,43544,43672,43554
 AiPlayerbot.PremadeSpecLink.6.3.60 = 005512153330030320102013-305
@@ -1073,15 +1190,22 @@ AiPlayerbot.PremadeSpecLink.6.3.80 = 005512153330030320102013-3050505002023001-0
 # SHAMAN
 #
 #
+#萨满预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/shaman/……
 
+#元素萨
 AiPlayerbot.PremadeSpecName.7.0 = ele pve
 AiPlayerbot.PremadeSpecGlyph.7.0 = 41536,43385,41532,43386,44923,45776
 AiPlayerbot.PremadeSpecLink.7.0.60 = 4530001520213351102301351
 AiPlayerbot.PremadeSpecLink.7.0.80 = 3530001523213351322301351-005050031
+
+#增强萨
 AiPlayerbot.PremadeSpecName.7.1 = enh pve
 AiPlayerbot.PremadeSpecGlyph.7.1 = 41542,43385,41539,43386,44923,45771
 AiPlayerbot.PremadeSpecLink.7.1.60 = -30205033005001333031131131051
 AiPlayerbot.PremadeSpecLink.7.1.80 = 053030052-30205033005021333031131131051
+
+#治疗萨
 AiPlayerbot.PremadeSpecName.7.2 = resto pve
 AiPlayerbot.PremadeSpecGlyph.7.2 = 41517,43385,41527,43386,44923,45775
 AiPlayerbot.PremadeSpecLink.7.2.60 = --50005301235310501102321251
@@ -1096,19 +1220,28 @@ AiPlayerbot.PremadeSpecLink.7.2.80 = -00502033-50005331335310501122331251
 # MAGE
 #
 #
+#法师预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/shaman/……
 
+#奥法
 AiPlayerbot.PremadeSpecName.8.0 = arcane pve
 AiPlayerbot.PremadeSpecGlyph.8.0 = 42735,43339,44955,43364,43361,42751
 AiPlayerbot.PremadeSpecLink.8.0.60 = 23000503110033014032310150532
 AiPlayerbot.PremadeSpecLink.8.0.80 = 23000523310033015032310250532-03-203203001
+
+#火法
 AiPlayerbot.PremadeSpecName.8.1 = fire pve
 AiPlayerbot.PremadeSpecGlyph.8.1 = 42739,43339,45737,43364,44920,42751
 AiPlayerbot.PremadeSpecLink.8.1.60 = -0055030011302231053120321341
 AiPlayerbot.PremadeSpecLink.8.1.80 = 23000503110003-0055030011302331053120321351
+
+#冰法
 AiPlayerbot.PremadeSpecName.8.2 = frost pve
 AiPlayerbot.PremadeSpecGlyph.8.2 = 42742,43339,50045,43364,43361,42751
 AiPlayerbot.PremadeSpecLink.8.2.60 = --0533030313203100030152231151
 AiPlayerbot.PremadeSpecLink.8.2.80 = 23002303110003--0533030313203100030152231351
+
+#冰火法
 AiPlayerbot.PremadeSpecName.8.3 = frostfire pve
 AiPlayerbot.PremadeSpecGlyph.8.3 = 44684,44920,42751,43339,43364,45737
 AiPlayerbot.PremadeSpecLink.8.3.60 = -2305032012303331053120300051
@@ -1123,17 +1256,24 @@ AiPlayerbot.PremadeSpecLink.8.3.80 = -2305032012303331053120311351-023303031
 # WARLOCK
 #
 #
+#术士预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/warlock/……
 
+#痛苦术士
 AiPlayerbot.PremadeSpecName.9.0 = affli pve
 AiPlayerbot.PremadeSpecGlyph.9.0 = 45785,43390,50077,43394,43393,45779
 AiPlayerbot.PremadeSpecLink.9.0.60 = 2350022001113510053500131151
 AiPlayerbot.PremadeSpecLink.9.0.70 = 2350022001113510053500131151--55
 AiPlayerbot.PremadeSpecLink.9.0.80 = 2350022001113510253500331151--5500000501
+
+#恶魔术士
 AiPlayerbot.PremadeSpecName.9.1 = emo pve
 AiPlayerbot.PremadeSpecGlyph.9.1 = 45785,43390,50077,43394,43393,42459
 AiPlayerbot.PremadeSpecLink.9.1.60 = -003203301135112530135201051
 AiPlayerbot.PremadeSpecLink.9.1.70 = -003203301135112530135201051-55
 AiPlayerbot.PremadeSpecLink.9.1.80 = -003203301135112530135221351-55000005
+
+#毁灭术士
 AiPlayerbot.PremadeSpecName.9.2 = destro pve
 AiPlayerbot.PremadeSpecGlyph.9.2 = 45785,43390,50077,43394,43393,42454
 AiPlayerbot.PremadeSpecLink.9.2.60 = --05203205210131051313230341
@@ -1148,19 +1288,28 @@ AiPlayerbot.PremadeSpecLink.9.2.80 = -03310030003-05203205210331051335230351
 # DRUID
 #
 #
+#德鲁伊预设
+#天赋模拟器：https://www.wowhead.com/wotlk/talent-calc/druid/……
 
+#平衡德
 AiPlayerbot.PremadeSpecName.11.0 = balance pve
 AiPlayerbot.PremadeSpecGlyph.11.0 = 40916,43331,40921,43335,44922,40919
 AiPlayerbot.PremadeSpecLink.11.0.60 = 5022203105331003213005301231
 AiPlayerbot.PremadeSpecLink.11.0.80 = 5032203105331303213305301231--205003012
+
+#熊德
 AiPlayerbot.PremadeSpecName.11.1 = bear pve
 AiPlayerbot.PremadeSpecGlyph.11.1 = 40897,43331,46372,43335,43332,40899
 AiPlayerbot.PremadeSpecLink.11.1.60 = -500232130322110353100301310501
 AiPlayerbot.PremadeSpecLink.11.1.80 = -501232130322110353120303313511-20350001
+
+#恢复德
 AiPlayerbot.PremadeSpecName.11.2 = resto pve
 AiPlayerbot.PremadeSpecGlyph.11.2 = 40913,43331,40906,43335,44922,45602
 AiPlayerbot.PremadeSpecLink.11.2.60 = --230033312031500531050113051
 AiPlayerbot.PremadeSpecLink.11.2.80 = 05320031--230033312031501531053313051
+
+#猫德
 AiPlayerbot.PremadeSpecName.11.3 = cat pve
 AiPlayerbot.PremadeSpecGlyph.11.3 = 40902,43331,40901,43335,44922,45604
 AiPlayerbot.PremadeSpecLink.11.3.60 = -552202032322010053100030310501
@@ -1236,7 +1385,7 @@ AiPlayerbot.WorldBuff.0.11.3.80.80 = 53760,57358                   #DRUID FERAL 
 
 # AiPlayerbot.RandomClassSpecProb.<class>.<specno>  # The probability to choose the spec
 # AiPlayerbot.RandomClassSpecIndex.<class>.<specno> # The spec index in PremadeSpec
-
+#和上面匹配的预制天赋的使用几率
 #
 #
 #
@@ -1462,7 +1611,8 @@ PlayerbotsDatabase.SynchThreads     = 1
 Playerbots.Updates.EnableDatabases = 1
 
 # Command server port, 0 - disabled
-AiPlayerbot.CommandServerPort = 8888
+#服务命令端口，默认8888，0是禁止
+AiPlayerbot.CommandServerPort = 0
 
 #
 #
@@ -1473,7 +1623,7 @@ AiPlayerbot.CommandServerPort = 8888
 # DEBUG SWITCHES
 #
 #
-
+#debug开关
 AiPlayerbot.SpellDump = 0
 AiPlayerbot.LogInGroupOnly = 1
 AiPlayerbot.LogValuesPerTick = 0
@@ -1484,6 +1634,7 @@ AiPlayerbot.RandomChangeMultiplier = 1
 AiPlayerbot.TellWhenAvoidAoe = 0
 
 # Enables/Disables performance monitor
+#启动和禁止性能监控（打开后会崩，暂时不处理）
 AiPlayerbot.PerfMonEnabled = 0
 
 #
@@ -1509,6 +1660,7 @@ AiPlayerbot.RandomBotEmote = 0
 # Enable dungeon suggestions for random bots
 AiPlayerbot.RandomBotSuggestDungeons = 1
 # Bots greet to the players
+#机器人是否向玩家问好？
 AiPlayerbot.EnableGreet = 0
 # Chance to reply to toxic links with toxic links (0-100)
 AiPlayerbot.ToxicLinksRepliesChance = 30
@@ -1519,7 +1671,7 @@ AiPlayerbot.GuildRepliesRate = 100
 # Bots will chat in guild about certain events
 AIPlayerbot.GuildFeedback = 1
 # Bots without a master will say their lines
-AiPlayerbot.RandomBotSayWithoutMaster = 0
+AiPlayerbot.RandomBotSayWithoutMaster = 1
 
 #
 #
@@ -1530,6 +1682,7 @@ AiPlayerbot.RandomBotSayWithoutMaster = 0
 #
 # Broadcast rates
 #
+#机器人说话到频道和公会的几率
 # 1 - to enable broadcasts globally, 0 - to disable (default 1)
 AiPlayerbot.EnableBroadcasts = 1
 #
@@ -1628,6 +1781,7 @@ AiPlayerbot.AllowedLogFiles = ""
 ##############################################
 
 # Log on all random bots on start
+#服务器启动后是否马上登录所有bots
 AiPlayerbot.RandomBotLoginAtStartup = 1
 
 # Guild Task system
@@ -1651,6 +1805,7 @@ AiPlayerbot.PremadeAvoidAoe = 62234-4
 
 AiPlayerbot.MinRandomBotsPriceChangeInterval = 7200
 AiPlayerbot.MaxRandomBotsPriceChangeInterval = 172800
+#机器人的策略变更时间，默认180-720秒：3-12分钟
 AiPlayerbot.MinRandomBotChangeStrategyTime = 180
 AiPlayerbot.MaxRandomBotChangeStrategyTime = 720
 
@@ -1674,7 +1829,9 @@ AiPlayerbot.GuildTaskAdvertCleanupTime = 300
 AiPlayerbot.GuildTaskKillTaskDistance = 200
 
 # Distance margin for facade calculations
+#立面计算的距离margin（余量）
 AiPlayerbot.TargetPosRecalcDistance = 0.1
 
 # Allow bots to be summoned near innkeepers
+#允许机器人在旅店老板附近被召唤
 AiPlayerbot.SummonAtInnkeepersEnabled = 1
