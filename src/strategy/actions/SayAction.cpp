@@ -137,6 +137,14 @@ bool SayAction::Execute(Event event)
     if (!sPlayerbotTextMgr->GetBotText(qualifier, text, placeholders))
         return false;
 
+    // 玩家机器人不说话
+    bool randomBot = sRandomPlayerbotMgr->IsRandomBot(bot);
+    if (!randomBot)
+    {
+        return true;
+    }
+    // end -----------
+
     if (text.find("/y ") == 0)
         bot->Yell(text.substr(3), (bot->GetTeamId() == TEAM_ALLIANCE ? LANG_COMMON : LANG_ORCISH));
     else

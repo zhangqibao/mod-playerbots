@@ -46,6 +46,8 @@ public:
     void OnBotLogin(Player* const bot);
 
     std::vector<std::string> HandlePlayerbotCommand(char const* args, Player* master = nullptr);
+    std::vector<std::string> HandlePlayerbotCommandSimple(char const* args, Player* master = nullptr);
+
     std::string const ProcessBotCommand(std::string const cmd, ObjectGuid guid, ObjectGuid masterguid, bool admin,
                                         uint32 masterAccountId, uint32 masterGuildId);
     uint32 GetAccountId(std::string const name);
@@ -69,6 +71,10 @@ public:
     virtual ~PlayerbotMgr();
 
     static bool HandlePlayerbotMgrCommand(ChatHandler* handler, char const* args);
+    static bool HandlePlayerbotMgrCommand2(ChatHandler* handler, char const* args);  // 给普通玩家使用
+    static bool HandlePlayerbotLogoutChkCommand(ChatHandler* handler);  // 给普通玩家上线时踢掉自己角色机器人内部使用
+    static bool HandlePlayerbotDebugCommand(ChatHandler* handler, char const* args);
+    static bool HandlePlayerbotInitCommand(ChatHandler* handler, char const* args);
     void HandleMasterIncomingPacket(WorldPacket const& packet);
     void HandleMasterOutgoingPacket(WorldPacket const& packet);
     void HandleCommand(uint32 type, std::string const text);

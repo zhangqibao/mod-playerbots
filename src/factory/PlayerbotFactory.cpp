@@ -214,6 +214,10 @@ void PlayerbotFactory::Randomize(bool incremental)
     // {
     //     return;
     // }
+
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot))
+    return;
+
     LOG_DEBUG("playerbots", "{} randomizing {} (level {} class = {})...", (incremental ? "Incremental" : "Full"),
              bot->GetName().c_str(), level, bot->getClass());
     // LOG_DEBUG("playerbots", "Preparing to {} randomize...", (incremental ? "incremental" : "full"));
@@ -471,6 +475,26 @@ void PlayerbotFactory::Randomize(bool incremental)
         pmo->finish();
 }
 
+void PlayerbotFactory::ResetTalent()
+{
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot))
+        return;
+
+    InitTalentsTree(false, true, true);  // 第一个是增量，默认false可以重置主天赋
+    InitPet();
+    InitPetTalents();
+    InitClassSpells();
+    InitAvailableSpells();
+    InitSkills();
+
+    bot->DurabilityRepairAll(false, 1.0f, false);
+    if (bot->isDead())
+        bot->ResurrectPlayer(1.0f, false);
+    uint32 money = urand(level * 1000, level * 5 * 1000);
+    if (bot->GetMoney() < money)
+        bot->SetMoney(money);
+}
+
 void PlayerbotFactory::Refresh()
 {
     // Prepare();
@@ -478,6 +502,9 @@ void PlayerbotFactory::Refresh()
     // {
     //     InitEquipment(true);
     // }
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot))
+        return;
+
     InitAttunementQuests();
     ClearInventory();
     InitAmmo();
@@ -486,7 +513,7 @@ void PlayerbotFactory::Refresh()
     // InitPotions();
     if (!sPlayerbotAIConfig->equipmentPersistence || bot->GetLevel() < sPlayerbotAIConfig->equipmentPersistenceLevel)
     {
-        InitTalentsTree(true, true, true);
+        InitTalentsTree(true, true, true);  // 第一个是增量，默认false可以重置主天赋
     }
     InitPet();
     InitPetTalents();
@@ -3914,6 +3941,9 @@ void PlayerbotFactory::ApplyEnchantTemplate(uint8 spec)
 
 void PlayerbotFactory::ApplyEnchantAndGemsNew(bool destoryOld)
 {
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot))
+        return;
+
     int32 bestGemEnchantId[4] = {-1, -1, -1, -1};  // 1, 2, 4, 8 color
     float bestGemScore[4] = {0, 0, 0, 0};
     std::vector<uint32> curCount = GetCurrentGemsCount();

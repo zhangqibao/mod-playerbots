@@ -402,6 +402,13 @@ void RandomPlayerbotMgr::UpdateAIInternal(uint32 elapsed, bool /*minimal*/)
             if (!GetPlayerBot(bot))
                 continue;
 
+            if (playerBots.size() >= sRandomPlayerbotMgr->GetMaxAllowedBotCount())
+            {
+                // LOG_ERROR("xx", "playerBotsx2x: {} GetMaxAllowedBotCount: {} ", playerBots.size(),
+                // sRandomPlayerbotMgr->GetMaxAllowedBotCount());//测试 这个地方会间隔20秒左右循环调用
+                return;
+            }
+
             if (ProcessBot(bot))
             {
                 updateBots--;
@@ -529,6 +536,13 @@ uint32 RandomPlayerbotMgr::AddRandomBots()
                 ObjectGuid::LowType guid = info.guid;
                 uint32 rClass = info.rClass;
                 uint32 rRace = info.rRace;
+
+                if (rClass == CLASS_DEATH_KNIGHT &&
+                    sPlayerbotAIConfig->randombotStartingLevel < sWorld->getIntConfig(CONFIG_START_HEROIC_PLAYER_LEVEL))
+                {
+                    // LOG_ERROR("xx", "CLASS_DEATH_KNIGHTxx guid: {} ", guid);//测试,重启没有打印到这里
+                    continue;
+                }
 
                 if (GetEventValue(guid, "add"))
                     continue;
@@ -1202,6 +1216,17 @@ bool RandomPlayerbotMgr::ProcessBot(uint32 bot)
     return false;
 }
 
+bool RandomPlayerbotMgr::currentBotsClear(uint32 bot)
+{
+    if (bot)
+    {
+        currentBots.erase(std::remove(currentBots.begin(), currentBots.end(), bot), currentBots.end());
+        return true;
+    }
+
+    return false;
+}
+
 bool RandomPlayerbotMgr::ProcessBot(Player* player)
 {
     uint32 bot = player->GetGUID().GetCounter();
@@ -1211,6 +1236,14 @@ bool RandomPlayerbotMgr::ProcessBot(Player* player)
 
     if (player->InBattlegroundQueue())
         return false;
+
+    if (playerBots.size() >= sRandomPlayerbotMgr->GetMaxAllowedBotCount())
+    {
+        // LOG_ERROR("xx", "playerBotsx6x: {} GetMaxAllowedBotCount: {} ", playerBots.size(),
+        // sRandomPlayerbotMgr->GetMaxAllowedBotCount());//测试
+        return false;
+    }
+
 
     // if death revive
     if (player->isDead())
@@ -1358,6 +1391,10 @@ void RandomPlayerbotMgr::RandomTeleport(Player* bot, std::vector<WorldLocation>&
             botAI->HasPlayerNearby())
             return;
     }
+
+    if (bot->GetLevel() < sPlayerbotAIConfig->autoTeleportMinLevel)  // 小于多少级的机器人禁止随机传送
+        return;
+
 
     // if (sPlayerbotAIConfig->randomBotRpgChance < 0)
     //     return;
@@ -1846,6 +1883,9 @@ void RandomPlayerbotMgr::RandomTeleportForLevel(Player* bot)
     if (bot->InBattleground())
         return;
 
+    if (bot->GetLevel() < sPlayerbotAIConfig->autoTeleportMinLevel)  // 小于多少级的机器人禁止随机传送
+        return;
+
     uint32 level = bot->GetLevel();
     uint8 race = bot->getRace();
     std::vector<WorldLocation>* locs = nullptr;
@@ -1869,6 +1909,10 @@ void RandomPlayerbotMgr::RandomTeleportGrindForLevel(Player* bot)
 {
     if (bot->InBattleground())
         return;
+
+    if (bot->GetLevel() < sPlayerbotAIConfig->autoTeleportMinLevel)  // 小于多少级的机器人禁止随机传送
+        return;
+
 
     uint32 level = bot->GetLevel();
     uint8 race = bot->getRace();
@@ -3041,6 +3085,9 @@ void RandomPlayerbotMgr::ChangeStrategyOnce(Player* player)
 
 void RandomPlayerbotMgr::RandomTeleportForRpg(Player* bot)
 {
+    if (bot->GetLevel() < sPlayerbotAIConfig->autoTeleportMinLevel)  // 小于多少级的机器人禁止随机传送
+        return;
+
     uint32 race = bot->getRace();
     uint32 level = bot->GetLevel();
     LOG_DEBUG("playerbots", "Random teleporting bot {} for RPG ({} locations available)", bot->GetName().c_str(),

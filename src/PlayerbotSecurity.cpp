@@ -25,6 +25,9 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
     {
         return PLAYERBOT_SECURITY_DENY_ALL;
     }
+
+    // 如果是对抗的阵营
+    /*
     if (botAI->IsOpposing(from))
     {
         if (reason)
@@ -32,9 +35,10 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
 
         return PLAYERBOT_SECURITY_DENY_ALL;
     }
-
+    */
     if (sPlayerbotAIConfig->IsInRandomAccountList(account))
     {
+        /*
         if (botAI->IsOpposing(from))
         {
             if (reason)
@@ -42,6 +46,7 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
 
             return PLAYERBOT_SECURITY_DENY_ALL;
         }
+        */
 
         // if (sLFGMgr->GetState(bot->GetGUID()) != lfg::LFG_STATE_NONE)
         // {
@@ -90,9 +95,11 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
         int32 fromGS = (int32)botAI->GetEquipGearScore(from, false, false);
         if (sPlayerbotAIConfig->gearscorecheck)
         {
+            //if (botGS && bot->GetLevel() > 15 && botGS > fromGS &&
+            //    static_cast<float>(100 * (botGS - fromGS) / botGS) >=
+            //        static_cast<float>(12 * sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL) / from->GetLevel()))
             if (botGS && bot->GetLevel() > 15 && botGS > fromGS &&
-                static_cast<float>(100 * (botGS - fromGS) / botGS) >=
-                    static_cast<float>(12 * sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL) / from->GetLevel()))
+                static_cast<float>(100 * (botGS - fromGS) / botGS) >= static_cast<float>(50.f))
             {
                 if (reason)
                     *reason = PLAYERBOT_DENY_GEARSCORE;
@@ -102,7 +109,8 @@ PlayerbotSecurityLevel PlayerbotSecurity::LevelFor(Player* from, DenyReason* rea
 
         if (bot->InBattlegroundQueue())
         {
-            if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
+            //if (!bot->GetGuildId() || bot->GetGuildId() != from->GetGuildId())
+            if (!bot->GetGuildId())  // 改成没有公会的机器人会拒绝
             {
                 if (reason)
                     *reason = PLAYERBOT_DENY_BG;

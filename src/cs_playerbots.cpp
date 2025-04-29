@@ -34,15 +34,23 @@ public:
             {"bg", HandleDebugBGCommand, SEC_GAMEMASTER, Console::Yes},
         };
         static ChatCommandTable playerbotsCommandTable = {
-            {"bot", HandlePlayerbotCommand, SEC_PLAYER, Console::No},
+            {"bot", HandlePlayerbotCommand, SEC_GAMEMASTER, Console::No},
             {"gtask", HandleGuildTaskCommand, SEC_GAMEMASTER, Console::Yes},
             {"pmon", HandlePerfMonCommand, SEC_GAMEMASTER, Console::Yes},
+
+            {"start", HandleStartCommand, SEC_GAMEMASTER, Console::Yes},
+            {"stop", HandleStopCommand, SEC_GAMEMASTER, Console::Yes},
+            {"mydebug", HandleDebugCommand, SEC_GAMEMASTER, Console::Yes},
+            {"clear", HandleInitCommand, SEC_GAMEMASTER, Console::Yes},
+
             {"rndbot", HandleRandomPlayerbotCommand, SEC_GAMEMASTER, Console::Yes},
             {"debug", playerbotsDebugCommandTable},
         };
 
         static ChatCommandTable commandTable = {
             {"playerbots", playerbotsCommandTable},
+            {"bot", HandlePlayerbotCommand2, SEC_PLAYER, Console::No},
+            {"botchk", HandlePlayerbotLogoutChk, SEC_PLAYER, Console::No},
         };
 
         return commandTable;
@@ -53,6 +61,15 @@ public:
         return PlayerbotMgr::HandlePlayerbotMgrCommand(handler, args);
     }
 
+    static bool HandlePlayerbotCommand2(ChatHandler* handler, char const* args)
+    {
+        return PlayerbotMgr::HandlePlayerbotMgrCommand2(handler, args);
+    }
+    static bool HandlePlayerbotLogoutChk(ChatHandler* handler)
+    {
+        return PlayerbotMgr::HandlePlayerbotLogoutChkCommand(handler);
+    }
+
     static bool HandleRandomPlayerbotCommand(ChatHandler* handler, char const* args)
     {
         return RandomPlayerbotMgr::HandlePlayerbotConsoleCommand(handler, args);
@@ -61,6 +78,30 @@ public:
     static bool HandleGuildTaskCommand(ChatHandler* handler, char const* args)
     {
         return GuildTaskMgr::HandleConsoleCommand(handler, args);
+    }
+
+    
+    static bool HandleStopCommand(ChatHandler* handler, char const* args)
+    {
+        sRandomPlayerbotMgr->LogoutAllBots();
+        sPlayerbotAIConfig->randomBotAutologin = false;
+        return true;
+    }
+    static bool HandleDebugCommand(ChatHandler* handler, char const* args)
+    {
+        return PlayerbotMgr::HandlePlayerbotDebugCommand(handler, args);
+    }
+
+    static bool HandleInitCommand(ChatHandler* handler, char const* args)
+    {
+        return PlayerbotMgr::HandlePlayerbotInitCommand(handler, args);
+    }
+
+    static bool HandleStartCommand(ChatHandler* handler, char const* args)
+    {
+        sPlayerbotAIConfig->randomBotAutologin = true;
+        sRandomPlayerbotMgr->SetNextCheckDelay(5000);  // 5秒后检查
+        return true;
     }
 
     static bool HandlePerfMonCommand(ChatHandler* handler, char const* args)

@@ -406,6 +406,9 @@ public:
     BotState GetState() { return currentState; };
     void ResetStrategies(bool load = false);
     void ReInitCurrentEngine();
+
+    Engine* GetCurrentEngine() { return currentEngine; };  // 获得CurrentEngine
+
     void Reset(bool full = false);
     static bool IsTank(Player* player, bool bySpec = false);
     static bool IsHeal(Player* player, bool bySpec = false);
@@ -570,6 +573,9 @@ public:
     bool EqualLowercaseName(std::string s1, std::string s2);
     InventoryResult CanEquipItem(uint8 slot, uint16& dest, Item* pItem, bool swap, bool not_loading = true) const;
     uint8 FindEquipSlot(ItemTemplate const* proto, uint32 slot, bool swap) const;
+
+    static Position GetAbsoluteTransportPosition(WorldObject const* object);
+
     std::vector<Item*> GetInventoryAndEquippedItems();
     std::vector<Item*> GetInventoryItems();
     uint32 GetInventoryItemsCountWithId(uint32 itemId);

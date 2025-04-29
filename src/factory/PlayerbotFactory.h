@@ -110,6 +110,7 @@ public:
     static ObjectGuid GetRandomBot();
     static void Init();
     void Refresh();
+    void ResetTalent();
     void Randomize(bool incremental);
     static std::list<uint32> classQuestIds;
     void ClearEverything();

@@ -21,6 +21,11 @@ bool TalkToQuestGiverAction::ProcessQuest(Quest const* quest, Object* questGiver
     std::ostringstream out;
     out << "Quest ";
 
+    // 判断是否是玩家账号下的机器人，玩家账号的机器人不自动同步任务
+    uint32 botAccount = sCharacterCache->GetCharacterAccountIdByGuid(bot->GetGUID());
+    bool isRandomBot = sRandomPlayerbotMgr->IsRandomBot(bot->GetGUID().GetCounter());
+    bool isRandomAccount = sPlayerbotAIConfig->IsInRandomAccountList(botAccount);
+
     QuestStatus status = bot->GetQuestStatus(quest->GetQuestId());
     Player* master = GetMaster();
 
@@ -35,7 +40,7 @@ bool TalkToQuestGiverAction::ProcessQuest(Quest const* quest, Object* questGiver
         }
     }
 
-    if (sPlayerbotAIConfig->syncQuestWithPlayer)
+    if (sPlayerbotAIConfig->syncQuestWithPlayer && isRandomAccount && isRandomBot)
     {
         if (master && master->GetQuestStatus(quest->GetQuestId()) == QUEST_STATUS_COMPLETE &&
             (status == QUEST_STATUS_INCOMPLETE || status == QUEST_STATUS_FAILED))
@@ -255,6 +260,12 @@ bool TurnInQueryQuestAction::Execute(Event event)
     {
         return false;
     }
+
+    // 判断是否是玩家账号下的机器人，玩家账号的机器人不自动同步任务
+    uint32 botAccount = sCharacterCache->GetCharacterAccountIdByGuid(bot->GetGUID());
+    bool isRandomBot = sRandomPlayerbotMgr->IsRandomBot(bot->GetGUID().GetCounter());
+    bool isRandomAccount = sPlayerbotAIConfig->IsInRandomAccountList(botAccount);
+
     Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
     QuestStatus status = bot->GetQuestStatus(quest->GetQuestId());
     Player* master = GetMaster();
@@ -262,7 +273,7 @@ bool TurnInQueryQuestAction::Execute(Event event)
     if (sPlayerbotAIConfig->syncQuestForPlayer && master)
     {
         PlayerbotAI* masterBotAI = GET_PLAYERBOT_AI(master);
-        if (!masterBotAI || masterBotAI->IsRealPlayer())
+        if (!masterBotAI || (masterBotAI->IsRealPlayer() && !master->GetSession()->IsBot()))
         {
             QuestStatus masterStatus = master->GetQuestStatus(quest->GetQuestId());
             if (masterStatus == QUEST_STATUS_INCOMPLETE || masterStatus == QUEST_STATUS_FAILED)
@@ -270,7 +281,7 @@ bool TurnInQueryQuestAction::Execute(Event event)
         }
     }
 
-    if (sPlayerbotAIConfig->syncQuestWithPlayer)
+    if (sPlayerbotAIConfig->syncQuestWithPlayer && isRandomAccount && isRandomBot)
     {
         if (status == QUEST_STATUS_INCOMPLETE || status == QUEST_STATUS_FAILED)
         {

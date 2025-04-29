@@ -12,7 +12,8 @@
 
 bool ReachAreaTriggerAction::Execute(Event event)
 {
-    if (botAI->IsRealPlayer())  // Do not trigger own area trigger.
+    // if (botAI->IsRealPlayer()) //Do not trigger own area trigger.
+    if (botAI->IsRealPlayer() && !bot->GetSession()->IsBot())  // Do not trigger own area trigger.
         return false;
 
     uint32 triggerId;

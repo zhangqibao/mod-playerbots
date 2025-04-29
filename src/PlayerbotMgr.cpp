@@ -33,6 +33,7 @@
 #include "BroadcastHelper.h"
 #include "PlayerbotDbStore.h"
 #include "WorldSessionMgr.h"
+#include "Engine.h"
 
 PlayerbotHolder::PlayerbotHolder() : PlayerbotAIBase(false) {}
 class PlayerbotLoginQueryHolder : public LoginQueryHolder
@@ -64,6 +65,15 @@ void PlayerbotHolder::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId
     uint32 accountId = sCharacterCache->GetCharacterAccountIdByGuid(playerGuid);
     if (!accountId)
         return;
+
+    // 如果角色已被banned，禁止登陆，否则会崩
+    QueryResult result = CharacterDatabase.Query("SELECT guid FROM character_banned WHERE guid = {} AND active = 1",playerGuid.GetCounter());
+    if (result)
+    {
+        return;
+    }
+    // end ------------
+
     
     WorldSession* masterSession = masterAccountId ? sWorldSessionMgr->FindSession(masterAccountId) : nullptr;
     Player* masterPlayer = masterSession ? masterSession->GetPlayer() : nullptr;
@@ -156,6 +166,18 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder con
     sRandomPlayerbotMgr->OnPlayerLogin(bot);
     OnBotLogin(bot);
 
+    // 这里是为了禁止DK机器人登录，后期开60后可以注释掉
+    if (bot->getClass() == CLASS_DEATH_KNIGHT &&
+        sPlayerbotAIConfig->randombotStartingLevel < sWorld->getIntConfig(CONFIG_START_HEROIC_PLAYER_LEVEL))
+    {
+         //LOG_ERROR("xx", "CLASS_DEATH_KNIGHTxx guid: {} name: {} ", bot->GetGUID().GetCounter(),
+         //bot->GetName());//测试,这里可以成功禁止DK登陆了 擦除currentBots，否则会让DK机器人登陆死循环
+
+        sRandomPlayerbotMgr->currentBotsClear(bot->GetGUID().GetCounter());
+        LogoutPlayerBot(bot->GetGUID());
+    }
+
+
     botLoading.erase(holder.GetGuid());
 }
 
@@ -214,8 +236,24 @@ void PlayerbotHolder::LogoutAllBots()
             continue;
 
         PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
-        if (!botAI || botAI->IsRealPlayer())
+        if (!botAI)
+        {
+            // 机器人如果没有AI
+            // LOG_ERROR("xx", "!botAI bot->GetGUID {}  ", bot->GetGUID().GetCounter());//测试
             continue;
+        }
+
+        // 如果是master是自己的角色，比如.bot free的玩家机器人
+        if (botAI->IsRealPlayer())
+        {
+            // LOG_ERROR("xx", "IsRealPlayer bot->GetGUID {}  ", bot->GetGUID().GetCounter());//测试
+            playerBots.erase(bot->GetGUID());                       // 从原主人Mgr的playerBots里删除
+            sRandomPlayerbotMgr->playerBots[bot->GetGUID()] = bot;  // 添加到随机机器人Mgr的playerBots里
+            // end -------------
+
+            continue;
+        }
+
 
         LogoutPlayerBot(bot->GetGUID());
     }
@@ -270,6 +308,14 @@ void PlayerbotHolder::LogoutPlayerBot(ObjectGuid guid)
             return;
 
         Group* group = bot->GetGroup();
+
+        // 如果有主人，且主人不在线，退出队伍
+        // if (group && !botAI->GetMaster())
+        if (group)
+        {
+            group->RemoveMember(guid);
+        }
+
         if (group && !bot->InBattleground() && !bot->InBattlegroundQueue() && botAI->HasActivePlayerMaster())
         {
             sPlayerbotDbStore->Save(botAI);
@@ -633,6 +679,30 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
     bool isRandomAccount = sPlayerbotAIConfig->IsInRandomAccountList(botAccount);
     bool isMasterAccount = (masterAccountId == botAccount);
 
+    // 普通玩家禁止添加随机机器人
+    // if (isRandomAccount && !admin)
+    //{
+    //     return "You cannot haddle this bot.";
+    // }
+    //---------------------
+
+    // 普通玩家禁止添加其他账号下的角色为机器人
+    if (!isRandomAccount && !isMasterAccount && !admin)
+    {
+        return "You cannot haddle other player's character as bot.";
+    }
+    //---------------------
+
+    // 普通玩家非满级禁止添加机器人
+    if (!admin && masterguid)
+    {
+        Player* master = ObjectAccessor::FindConnectedPlayer(masterguid);
+        if (master->GetLevel() < 60)
+            return "Just 60 level player can add bots.";
+    }
+    //--------------
+
+
     if (cmd == "add" || cmd == "addaccount" || cmd == "login")
     {
         if (ObjectAccessor::FindPlayer(guid))
@@ -649,19 +719,174 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
                 return "you can only add bots from your own account";
         }
 
-        AddPlayerBot(guid, masterAccountId);
+        // 只有管理员可以添加真人角色到bot，普通玩家可以添加自己帐号下的角色
+        if (!isRandomAccount && !isMasterAccount && !admin)
+            return "You cannot login another player's character as bot.";
+        // end --------------------
+
+        /*
+        //只有管理员可以添加真人角色到bot
+        if (!sPlayerbotAIConfig->allowPlayerBots && !isRandomAccount && !admin)
+            return "You cannot login player's character as bot.";
+        //end ----------------
+        */
+
+        if (admin)
+        {
+            AddPlayerBot(guid, masterAccountId);
+        }
+        else
+        {
+            uint8 getbots = 0;
+            for (PlayerBotMap::const_iterator i = GetPlayerBotsBegin(); i != GetPlayerBotsEnd(); ++i)
+            {
+                if (Player* bot = i->second)
+                {
+                    PlayerbotAI* botAI = GET_PLAYERBOT_AI(bot);
+                    if (botAI->GetMaster()->GetGUID() == masterguid)
+                    {
+                        getbots++;
+                        if (getbots >= 4)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 看主人所在队伍的机器人数量
+            uint16 _grpbotsnum = 0;
+            if (masterguid)
+            {
+                Player* master = ObjectAccessor::FindConnectedPlayer(masterguid);
+                Group* grp = master->GetGroup();
+                if (grp)
+                {
+                    for (GroupReference* itr = grp->GetFirstMember(); itr != nullptr; itr = itr->next())
+                    {
+                        Player* member = itr->GetSource();
+                        if (!member)
+                            continue;
+
+                        if (member->GetSession()->IsBot())
+                        {
+                            _grpbotsnum = _grpbotsnum + 1;
+                        }
+                    }
+                }
+            }
+
+            // 如果还没有3个AI机器人，可以召唤新机器人
+            if (getbots < 4)
+            {
+                // LOG_ERROR("xx", "_grpbotsnum {}", _grpbotsnum);//测试
+                if (_grpbotsnum + getbots >
+                    3)  // 如果当前队伍已经有3个或3个以上的机器人了，就不接受，>3表示允许组4个机器人
+                {
+                    // LOG_ERROR("xx", "1getbots {}  ", getbots);//测试
+                    // LOG_ERROR("xx", "1_grpbotsnum {}  ", _grpbotsnum);//测试
+                    return "Your bots is full!";
+                }
+                else
+                {
+                    // LOG_ERROR("xx", "getbots {}  ", getbots);//测试
+                    // LOG_ERROR("xx", "_grpbotsnum {}  ", _grpbotsnum);//测试
+                    AddPlayerBot(guid, masterAccountId);
+                }
+            }
+            else
+            {
+                return "Your bots is full!";
+            }
+        }
+
+
         return "ok";
     }
     else if (cmd == "remove" || cmd == "logout" || cmd == "rm")
     {
-        if (!ObjectAccessor::FindPlayer(guid))
+        // LOG_ERROR("xx", "remove ");//测试
+        if (!ObjectAccessor::FindPlayer(guid) && (!GetPlayerBot(guid) && !sRandomPlayerbotMgr->GetPlayerBot(guid)))
+        {
+            // 这里如果GetPlayerBot里有这个guid，会导致游戏中显示机器人在线，实际离线的bug，甚至有时候能看到机器人，但无法让他下线
+            // 所以这里判断必须当GetPlayerBot里面找不到这个guid时，rm命令才会因不在线而跳出
             return "player is offline";
+        }
+
+        // 如果是admin，遇到玩家机器人，可以强制下线
+        if (!GetPlayerBot(guid) && admin && !isRandomBot)
+        {
+            // 每个角色登录进来的playerBots数组都不一样！
+            // 随机机器人的playerBots是一个独立的数组
+            // LOG_ERROR("xx", "sRandomPlayerbotMgr guid {} ", guid.GetCounter());//测试
+
+            // 如果随机机器人的GetPlayerBot里有这个guid，就logout它（在主人退出时，要把这个guid转移到sRandomPlayerbotMgr的GetPlayerBot里[函数：LogoutAllBots()]）
+            if (sRandomPlayerbotMgr->GetPlayerBot(guid))
+            {
+                sRandomPlayerbotMgr->LogoutPlayerBot(guid);
+                return "ok";
+            }
+            return "not your bot";
+        }
+        // end --------------------------------
+
 
         if (!GetPlayerBot(guid))
             return "not your bot";
 
         LogoutPlayerBot(guid);
         return "ok";
+    }
+    else if (cmd == "free" && admin)
+    {
+        if (!ObjectAccessor::FindPlayer(guid))
+            return "player is offline";
+
+        Player* botplayer = GetPlayerBot(guid);
+        if (!botplayer)
+            return "not your bot";
+
+        PlayerbotAI* botAI = GET_PLAYERBOT_AI(botplayer);
+        if (botAI)
+        {
+            // 先进行维护，修理装备，设置新天赋点
+            PlayerbotFactory factory(botplayer, botplayer->GetLevel());
+            factory.InitAmmo();
+            factory.InitTalentsTree(true, true, true);
+            factory.InitPetTalents();
+            factory.InitClassSpells();
+            factory.InitAvailableSpells();
+            botplayer->DurabilityRepairAll(false, 1.0f, false);
+
+            // LOG_ERROR("xx", "botAI");//测试
+            // botAI->SetMaster(botplayer);
+            botAI->SetMaster(botplayer);
+
+            botAI->ResetStrategies();
+            botAI->Reset();
+            return "set bot free ok";
+        }
+    }
+    else if (cmd == "back" && admin)
+    {
+        if (!ObjectAccessor::FindPlayer(guid))
+            return "player is offline";
+
+        Player* botplayer = GetPlayerBot(guid);
+        if (!botplayer)
+            return "not your bot";
+
+        Player* master = ObjectAccessor::FindPlayer(masterguid);
+
+        PlayerbotAI* botAI = GET_PLAYERBOT_AI(botplayer);
+        if (botAI && master)
+        {
+            // LOG_ERROR("xx", "botAI");//测试
+            botAI->SetMaster(master);
+            botAI->ResetStrategies();
+            botAI->Reset();
+            return "set bot back ok";
+        }
     }
 
     // if (admin)
@@ -687,14 +912,19 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
         }
     }
 
-    if (GET_PLAYERBOT_AI(bot))
+    if (GET_PLAYERBOT_AI(bot) && isRandomAccount)
     {
         if (Player* master = GET_PLAYERBOT_AI(bot)->GetMaster())
         {
+            //if (master->GetSession()->GetSecurity() <= SEC_PLAYER && sPlayerbotAIConfig->autoInitOnly &&
+            //    cmd != "init=auto")
+            //{
+            //    return "The command is not allowed, use init=auto instead.";
+            //}
             if (master->GetSession()->GetSecurity() <= SEC_PLAYER && sPlayerbotAIConfig->autoInitOnly &&
-                cmd != "init=auto")
+                (cmd != "talent" && cmd != "ta"))
             {
-                return "The command is not allowed, use init=auto instead.";
+                return "usage: add/remove/talent NAME";
             }
             int gs;
             if (cmd == "init=white" || cmd == "init=common")
@@ -729,6 +959,11 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
             }
             else if (cmd == "init=auto")
             {
+                if (master->GetSession()->GetSecurity() <= SEC_PLAYER)
+                {
+                    return "usage: add/remove/talent NAME";
+                }
+
                 uint32 mixedGearScore = PlayerbotAI::GetMixedGearScore(master, true, false, 12) *
                                         sPlayerbotAIConfig->autoInitEquipLevelLimitRatio;
                 // work around: distinguish from 0 if no gear
@@ -738,6 +973,12 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
                 factory.Randomize(false);
                 return "ok, gear score limit: " + std::to_string(mixedGearScore / PlayerbotAI::GetItemScoreMultiplier(ItemQualities(ITEM_QUALITY_EPIC))) +
                        "(for epic)";
+            }
+            else if ((cmd == "talent" || cmd == "ta"))
+            {
+                PlayerbotFactory factory(bot, bot->GetLevel());
+                factory.ResetTalent();
+                return "reset talent ok";
             }
             else if (cmd.starts_with("init=") && sscanf(cmd.c_str(), "init=%d", &gs) != -1)
             {
@@ -756,30 +997,40 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
         }
     }
 
-    if (cmd == "levelup" || cmd == "level")
+    if (isRandomAccount)
     {
-        PlayerbotFactory factory(bot, bot->GetLevel());
-        factory.Randomize(true);
-        return "ok";
+        if (cmd == "levelup" || cmd == "level")
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel());
+            factory.Randomize(true);
+            return "ok";
+        }
+        else if (cmd == "refresh")
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel());
+            factory.Refresh();
+            return "ok";
+        }
+        else if ((cmd == "talent" || cmd == "ta"))
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel());
+            factory.ResetTalent();
+            return "reset talent ok";
+        }
+        else if (cmd == "random")
+        {
+            sRandomPlayerbotMgr->Randomize(bot);
+            return "ok";
+        }
+        else if (cmd == "quests")
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel());
+            factory.InitInstanceQuests();
+            return "Initialization quests";
+        }
     }
-    else if (cmd == "refresh")
-    {
-        PlayerbotFactory factory(bot, bot->GetLevel());
-        factory.Refresh();
-        return "ok";
-    }
-    else if (cmd == "random")
-    {
-        sRandomPlayerbotMgr->Randomize(bot);
-        return "ok";
-    }
-    else if (cmd == "quests")
-    {
-        PlayerbotFactory factory(bot, bot->GetLevel());
-        factory.InitInstanceQuests();
-        return "Initialization quests";
-    }
-    // }
+    
+    // }//if admin
 
     return "unknown command";
 }
@@ -817,6 +1068,347 @@ bool PlayerbotMgr::HandlePlayerbotMgrCommand(ChatHandler* handler, char const* a
     }
 
     return true;
+}
+
+bool PlayerbotMgr::HandlePlayerbotLogoutChkCommand(ChatHandler* handler)
+{
+    if (!sPlayerbotAIConfig->enabled)
+    {
+        handler->PSendSysMessage("|cffff0000Playerbot system is currently disabled!");
+        return false;
+    }
+
+    WorldSession* m_session = handler->GetSession();
+    if (!m_session)
+    {
+        handler->PSendSysMessage("You may only add bots from an active session");
+        return false;
+    }
+
+    Player* player = m_session->GetPlayer();
+    // LOG_ERROR("xx", "xx {} ", player->GetGUID().GetCounter());//测试
+
+    // 如果在随机mgr里存在(召唤玩家机器人的GM离线的时候)
+    if (sRandomPlayerbotMgr->GetPlayerBot(player->GetGUID()))
+    {
+        // LOG_ERROR("xx", "sRandomPlayerbotMgr {} ", player->GetGUID().GetCounter());//测试
+        sRandomPlayerbotMgr->LogoutPlayerBot(player->GetGUID());
+    }
+    else
+    {
+        // 如果随机mgr里不存在，去在线的所有真人玩家的MGR里寻找是否有这个机器人(召唤玩家机器人的GM在线的时候)
+        PlayerbotMgr* mgr = GET_PLAYERBOT_MGR(player);
+        if (!mgr)
+        {
+            // LOG_ERROR("xx", "xx {} ",
+            // player->GetGUID().GetCounter());//测试，如果真人玩家顶掉自己的玩家机器人，会打印到这里，guid是玩家的id
+            // 也就是用老session的player获取不到GET_PLAYERBOT_MGR，但下面用新顶上来的真人玩家的player就能获得GET_PLAYERBOT_MGR
+            // 而玩家机器人归属这个后面上线的玩家的GetPlayerBot，所以可以用新玩家的GetPlayerBot来logout机器人
+
+            for (WorldSessionMgr::SessionMap::const_iterator itr = sWorldSessionMgr->GetAllSessions().begin();
+                 itr != sWorldSessionMgr->GetAllSessions().end(); ++itr)
+            {
+                if (!itr->second || !itr->second->GetPlayer() || !itr->second->GetPlayer()->IsInWorld() ||
+                    itr->second->GetPlayer()->GetSession()->IsBot())
+                    continue;
+
+                // 如果当前session的player得不到MGR，可能是由于纯bot缺这个，选第一个在线的真人player执行这个命令
+                mgr = GET_PLAYERBOT_MGR(itr->second->GetPlayer());
+                if (!mgr)
+                {
+                    continue;
+                }
+                else
+                {
+                    if (!mgr->GetPlayerBot(player->GetGUID()))
+                    {
+                        continue;
+                    }
+                    else
+                        break;
+                }
+            }
+            if (!mgr)
+            {
+                handler->PSendSysMessage("You cannot control bots yet");
+                // LOG_ERROR("xx", "You cannot control bots yet");//测试
+                return false;
+            }
+        }
+
+        // LOG_ERROR("xx", "xx2 {} ",
+        // player->GetGUID().GetCounter());//测试，如果真人玩家顶掉自己的玩家机器人，会打印到这里，guid是玩家的id
+
+        mgr->LogoutPlayerBot(player->GetGUID());
+    }
+
+    return true;
+}
+bool PlayerbotMgr::HandlePlayerbotMgrCommand2(ChatHandler* handler, char const* args)
+{
+    if (!sPlayerbotAIConfig->enabled)
+    {
+        handler->PSendSysMessage("|cffff0000Playerbot system is currently disabled!");
+        return false;
+    }
+
+    WorldSession* m_session = handler->GetSession();
+    if (!m_session)
+    {
+        handler->PSendSysMessage("You may only add bots from an active session");
+        return false;
+    }
+
+    Player* player = m_session->GetPlayer();
+    PlayerbotMgr* mgr = GET_PLAYERBOT_MGR(player);
+    if (!mgr)
+    {
+        handler->PSendSysMessage("You cannot control bots yet");
+        return false;
+    }
+
+    std::vector<std::string> messages = mgr->HandlePlayerbotCommandSimple(args, player);
+    if (messages.empty())
+        return true;
+
+    for (std::vector<std::string>::iterator i = messages.begin(); i != messages.end(); ++i)
+    {
+        handler->PSendSysMessage("{}", i->c_str());
+    }
+
+    return true;
+}
+bool PlayerbotMgr::HandlePlayerbotDebugCommand(ChatHandler* handler, char const* args)
+{
+    if (!sPlayerbotAIConfig->enabled)
+    {
+        handler->PSendSysMessage("|cffff0000Playerbot system is currently disabled!");
+        return false;
+    }
+
+    Player* target = handler->getSelectedPlayer();
+    if (!target)
+    {
+        handler->SendErrorMessage(LANG_PLAYER_NOT_FOUND);
+        return false;
+    }
+
+    PlayerbotAI* botAI = GET_PLAYERBOT_AI(target);
+    bool randomBot = sRandomPlayerbotMgr->IsRandomBot(target);
+    if (botAI)
+    {
+        if (Engine* cEngine = botAI->GetCurrentEngine())
+        {
+            handler->PSendSysMessage("botAI {} {}", cEngine->ListStrategies().c_str(), target->GetName().c_str());
+        }
+        if (botAI->AllowActivity(ALL_ACTIVITY))
+        {
+            handler->PSendSysMessage("botAI AllowActivity {}", target->GetName().c_str());
+        }
+        if (botAI->IsActive())
+        {
+            handler->PSendSysMessage("botAI IsActive {}", target->GetName().c_str());
+        }
+    }
+
+    return true;
+}
+
+bool PlayerbotMgr::HandlePlayerbotInitCommand(ChatHandler* handler, char const* args)
+{
+    if (!sPlayerbotAIConfig->enabled)
+    {
+        handler->PSendSysMessage("|cffff0000Playerbot system is currently disabled!");
+        return false;
+    }
+
+    Player* target = handler->getSelectedPlayer();
+    if (!target)
+    {
+        handler->SendErrorMessage(LANG_PLAYER_NOT_FOUND);
+        return false;
+    }
+
+    PlayerbotAI* botAI = GET_PLAYERBOT_AI(target);
+    // bool randomBot = sRandomPlayerbotMgr->IsRandomBot(target);
+    // bool aiMaster = GET_PLAYERBOT_AI(botAI->GetMaster()) != nullptr;
+    // if (randomBot)
+    //{
+    //     GET_PLAYERBOT_AI(target)->SetMaster(nullptr);
+    // }
+
+    if (botAI)
+    {
+        // if (!aiMaster)
+        //     botAI->ResetStrategies(!randomBot);
+
+        // botAI->Reset();
+        // handler->PSendSysMessage("%s botAI init!", target->GetName().c_str());
+
+        if (!botAI->GetMaster())
+        {
+            // LOG_ERROR("playerbots", "Im freeman guid: {} mapid: {} class:{} PlayerName:{} x{} y{} z{} modifiedZ {}
+            // MovementFlag{}", bot->GetGUID().GetCounter(), bot->GetMapId(), bot->getClass(), bot->GetPlayerName(), x,
+            // y, z, modifiedZ, std::to_string(bot->GetUnitMovementFlags()));
+            botAI->ResetStrategies(true);
+            botAI->Reset(true);
+            handler->PSendSysMessage("{} botAI init no master!", target->GetName().c_str());
+            // bot->Say("ChangeStrategy", LANG_UNIVERSAL);
+        }
+        else
+        {
+            botAI->ResetStrategies(true);
+            botAI->Reset(true);
+            handler->PSendSysMessage("{} botAI init have master!", target->GetName().c_str());
+        }
+    }
+
+    return true;
+}
+
+std::vector<std::string> PlayerbotHolder::HandlePlayerbotCommandSimple(char const* args, Player* master)
+{
+    std::vector<std::string> messages;
+
+    if (!*args)
+    {
+        messages.push_back("usage: add/remove/talent NAME");
+        return messages;
+    }
+
+    char* cmd = strtok((char*)args, " ");
+    char* charname = strtok(nullptr, " ");
+    if (!cmd)
+    {
+        messages.push_back("usage: add/remove/talent NAME");
+        return messages;
+    }
+
+    // if (!strcmp(cmd, "list"))
+    //{
+    //     messages.push_back(ListBots(master));
+    //     return messages;
+    // }
+
+    std::string charnameStr;
+
+    if (!charname)
+    {
+        std::string name;
+        bool isPlayer = sCharacterCache->GetCharacterNameByGuid(master->GetTarget(), name);
+        // Player* tPlayer = ObjectAccessor::FindConnectedPlayer(master->GetTarget());
+        if (isPlayer)
+        {
+            charnameStr = name;
+        }
+        else
+        {
+            messages.push_back("usage: add/remove/talent NAME");
+            return messages;
+        }
+    }
+    else
+    {
+        charnameStr = charname;
+    }
+
+    std::string const cmdStr = cmd;
+
+    std::unordered_set<std::string> bots;
+    if (charnameStr == "*" && master)
+    {
+        Group* group = master->GetGroup();
+        if (!group)
+        {
+            messages.push_back("you must be in group");
+            return messages;
+        }
+
+        Group::MemberSlotList slots = group->GetMemberSlots();
+        for (Group::member_citerator i = slots.begin(); i != slots.end(); i++)
+        {
+            ObjectGuid member = i->guid;
+
+            if (member == master->GetGUID())
+                continue;
+
+            std::string bot;
+            if (sCharacterCache->GetCharacterNameByGuid(member, bot))
+                bots.insert(bot);
+        }
+    }
+
+    if (charnameStr == "!" && master && master->GetSession()->GetSecurity() > SEC_GAMEMASTER)
+    {
+        for (PlayerBotMap::const_iterator i = GetPlayerBotsBegin(); i != GetPlayerBotsEnd(); ++i)
+        {
+            if (Player* bot = i->second)
+                if (bot->IsInWorld())
+                    bots.insert(bot->GetName());
+        }
+    }
+
+    std::vector<std::string> chars = split(charnameStr, ',');
+    for (std::vector<std::string>::iterator i = chars.begin(); i != chars.end(); i++)
+    {
+        std::string const s = *i;
+
+        uint32 accountId = GetAccountId(s);
+        if (!accountId)
+        {
+            bots.insert(s);
+            continue;
+        }
+
+        QueryResult results = CharacterDatabase.Query("SELECT name FROM characters WHERE account = {}", accountId);
+        if (results)
+        {
+            do
+            {
+                Field* fields = results->Fetch();
+                std::string const charName = fields[0].Get<std::string>();
+                bots.insert(charName);
+            } while (results->NextRow());
+        }
+    }
+
+    for (auto i = bots.begin(); i != bots.end(); ++i)
+    {
+        std::string const bot = *i;
+
+        std::ostringstream out;
+        out << cmdStr << ": " << bot << " - ";
+
+        ObjectGuid member = sCharacterCache->GetCharacterGuidByName(bot);
+        // LOG_ERROR("xx", "member {} ", member.GetCounter());//测试
+        // LOG_ERROR("xx", "master->GetGUID() {} ", master->GetGUID().GetCounter());//测试
+        if (!member)
+        {
+            out << "character not found";
+        }
+        else if (master && member != master->GetGUID())
+        {
+            out << ProcessBotCommand(cmdStr, member, master->GetGUID(),
+                                     master->GetSession()->GetSecurity() >= SEC_GAMEMASTER,
+                                     master->GetSession()->GetAccountId(), master->GetGuildId());
+        }
+        else if (!master)
+        {
+            out << ProcessBotCommand(cmdStr, member, ObjectGuid::Empty, true, -1, -1);
+        }
+        else if (master &&
+                 member == master->GetGUID())  // 这种是代码中使用的，用作玩家真人登录，踢掉自己的在线机器人的用途
+        {
+            if (cmdStr == "remove" || cmdStr == "logout" || cmdStr == "rm")
+            {
+                out << ProcessBotCommand(cmdStr, member, ObjectGuid::Empty, true, -1, -1);
+            }
+        }
+
+        messages.push_back(out.str());
+    }
+
+    return messages;
 }
 
 std::vector<std::string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* master)

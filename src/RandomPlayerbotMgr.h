@@ -140,6 +140,9 @@ public:
     void RandomTeleportForRpg(Player* bot);
     uint32 GetMaxAllowedBotCount();
     bool ProcessBot(Player* player);
+
+    bool currentBotsClear(uint32 bot);
+
     void Revive(Player* player);
     void ChangeStrategy(Player* player);
     void ChangeStrategyOnce(Player* player);

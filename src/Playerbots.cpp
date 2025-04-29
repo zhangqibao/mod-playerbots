@@ -100,6 +100,7 @@ public:
             // especially if you are distributing a repack or hosting a public server
             // e.g. you can replace the URL with your own repository,
             // but it should be publicly accessible and include all modifications you've made
+            /*
             if (sPlayerbotAIConfig->enabled)
             {
                 ChatHandler(player->GetSession()).SendSysMessage(
@@ -117,6 +118,7 @@ public:
                     "|cff00ff00Playerbots:|r bot initialization at server startup takes about '" 
                     + roundedTime + "' minutes.");
             }
+            */
         }
     }
 
@@ -139,9 +141,14 @@ public:
         {
             if (PlayerbotAI* botAI = GET_PLAYERBOT_AI(receiver))
             {
-                botAI->HandleCommand(type, msg, player);
+                if (botAI->GetMaster() == player)
+                {
+                    botAI->HandleCommand(type, msg, player);
+                    return true;
+                }
+                else
+                    return true;
 
-                return false;
             }
         }
 

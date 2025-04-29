@@ -228,6 +228,21 @@ PlayerbotAI::~PlayerbotAI()
         sPlayerbotsMgr->RemovePlayerBotData(bot->GetGUID(), true);
 }
 
+Position PlayerbotAI::GetAbsoluteTransportPosition(WorldObject const* object)
+{
+    if (!object->GetTransport())
+        return object->GetPosition();
+
+    Position p = object->GetTransport()->GetPosition();
+    Position t = object->GetTransOffset();
+    t.m_positionX += p.m_positionX;
+    t.m_positionY += p.m_positionY;
+    t.m_positionZ += p.m_positionZ;
+    t.SetOrientation(Position::NormalizeOrientation(t.GetOrientation() + p.GetOrientation()));
+
+    return t;
+}
+
 void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
 {
     // Handle the AI check delay
@@ -240,6 +255,135 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
     if (!bot || !bot->IsInWorld() || !bot->GetSession() || bot->GetSession()->isLogingOut() ||
         bot->IsDuringRemoveFromWorld())
         return;
+
+    if (master)
+    {
+        // LOG_ERROR("xx", "xxgetmaster  {}", bot->GetName());//测试，战场中没有到这里
+        // 如果主人和机器人不在一个地区或距离过远，传送到主人
+        // if (master->IsAlive() && bot->IsAlive() && !bot->IsBeingTeleported() && !master->IsBeingTeleported() &&
+        //     (bot->GetMap() != master->GetMap() ||
+        //         (!bot->GetCharmInfo()->HasCommandState(COMMAND_STAY) && master->GetDistance(bot) >
+        //         SIZE_OF_GRIDS)))//bot->GetCharmInfo()->HasCommandState(COMMAND_STAY) 这样写不对，以后再看
+        // if (bot->GetGUID().GetCounter() == 22) {
+        //     LOG_ERROR("xxx", "GetDistance{} GetDistance2d{} BOT x{} y{} z{} MASTER X{} Y{} Z{} ",
+        //     GetMaster()->GetDistance(bot), GetMaster()->GetDistance2d(bot), bot->GetPositionX(), bot->GetPositionY(),
+        //     bot->GetPositionZ(), master->GetPositionX(), master->GetPositionY(), master->GetPositionZ());
+        // }
+        // 这样写不好用，bot的位置和master的位置是同一个，但实际bot在很远的地方往master快速靠近，还是先用area
+        // if (master->IsAlive() && bot->IsAlive() && !bot->IsBeingTeleported() && !master->IsBeingTeleported() &&
+        //     (bot->GetMap() != master->GetMap() || master->GetDistance2d(bot) > 200.0f ))
+        //{
+        //     if (sPlayerbotAIConfig->summonWhenGroup) {
+        //         bot->Relocate(master);
+        //         //bot->TeleportTo(master->GetMapId(), master->GetPositionX(), master->GetPositionY(),
+        //         master->GetPositionZ(), bot->GetOrientation());
+        //     }
+        // }
+
+        // 如果主人和机器人不在一个地区或距离过远，传送到主人
+        if (bot->IsInWorld() && master->IsInWorld() && master->IsAlive() && bot->IsAlive() &&
+            !bot->IsBeingTeleported() && !master->IsBeingTeleported())
+        {
+            if (!master->GetMap()->IsBattlegroundOrArena() && master->GetAreaId() != 2177 &&
+                master->GetAreaId() != 1741)
+            {
+                if (master->GetAreaId() != bot->GetAreaId() || bot->GetDistance(master) > 200.0f)
+                {
+                    if (sPlayerbotAIConfig->summonWhenGroup)
+                    {
+                        bot->TeleportTo(master->GetMapId(), master->GetPositionX(), master->GetPositionY(),
+                                        master->GetPositionZ(), bot->GetOrientation());
+                    }
+                }
+            }
+            else
+            {
+                SetNextCheckDelay(5000);
+            }
+        }
+
+        /*
+        //这种写法有时候GetDistance函数会崩，可能是玩家某个动作导致不在世界导致内存出错
+        float _distanceToTarget = bot->GetDistance(master);
+        //LOG_ERROR("playerbots", "_distanceToTarget  {}  ", _distanceToTarget);
+        if (master->IsAlive() && bot->IsAlive() && !bot->IsBeingTeleported() && !master->IsBeingTeleported() &&
+        (_distanceToTarget > 200.0f || master->GetAreaId() != bot->GetAreaId()) )
+        {
+            if (sPlayerbotAIConfig->summonWhenGroup) {
+                bot->TeleportTo(master->GetMapId(), master->GetPositionX(), master->GetPositionY(),
+        master->GetPositionZ(), bot->GetOrientation());
+            }
+        }
+        */
+
+        // 如果主人在副本中，且机器人是死亡状态，主人不在战斗中，自动复活
+        // if (master->IsAlive() && !master->IsInCombat() && !bot->IsAlive() &&
+        // master->GetMap()->IsDungeon())//这样写有时候会因为master->IsInCombat()崩掉，因为hasflag访问冲突，怀疑是master传送时不在世界中导致
+        if (master->IsAlive() && !master->IsInCombat() && !bot->IsBeingTeleported() && !master->IsBeingTeleported() &&
+            !bot->IsAlive() && master->GetMap()->IsDungeon())
+        {
+            bot->TeleportTo(master->GetMapId(), master->GetPositionX(), master->GetPositionY(), master->GetPositionZ(),
+                            bot->GetOrientation());
+            bot->ResurrectPlayer(0.5f);
+            bot->SpawnCorpseBones();
+        }
+    }
+
+    // Transport state
+    if (master)
+    {
+        if (bot->GetTransport() != master->GetTransport())
+        {
+            if (master->GetTransport())
+            {
+                if (bot->GetDistance2d(master) < 10.f)
+                {
+                    master->GetTransport()->AddPassenger(bot, true);
+                    bot->m_movementInfo.transport.pos.Relocate(master->GetTransOffset());
+                    bot->Relocate(GetAbsoluteTransportPosition(master));
+                    bot->AddUnitState(UNIT_STATE_IGNORE_PATHFINDING);
+                    nextAICheckDelay = 0;
+                }
+            }
+            else
+            {
+                // 这样写下电梯不会跑虚空
+                bot->StopMoving();
+                bot->GetMotionMaster()->Clear();
+                bot->GetMotionMaster()->MoveIdle();
+
+                bot->ClearUnitState(UNIT_STATE_IGNORE_PATHFINDING);
+                bot->GetTransport()->RemovePassenger(bot, true);
+                bot->SetTransport(nullptr);
+                bot->m_movementInfo.transport.Reset();
+                bot->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
+                bot->Relocate(master);  // 必须加这行，否则下雷霆崖的电梯寻路有问题，跑上去又下来
+
+                nextAICheckDelay = 0;
+            }
+        }
+    }
+    // 如果机器人没有主人，且有交通工具的标识，而地图上找不到交通工具，就移除交通工具的状态
+    else
+    {
+        if (Transport* t = bot->GetTransport())
+            if (!t->IsInMap(bot))
+            {
+                bot->StopMoving();
+                bot->GetMotionMaster()->Clear();
+                bot->GetMotionMaster()->MoveIdle();
+
+                bot->ClearUnitState(UNIT_STATE_IGNORE_PATHFINDING);
+                bot->GetTransport()->RemovePassenger(bot, true);
+                bot->SetTransport(nullptr);
+                bot->m_movementInfo.transport.Reset();
+                bot->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_ONTRANSPORT);
+
+                nextAICheckDelay = 0;
+            }
+    }
+    //end ----------------
+
 
     // Handle cheat options (set bot health and power if cheats are enabled)
     if (bot->IsAlive() &&
@@ -366,6 +510,9 @@ void PlayerbotAI::UpdateAIGroupMembership()
 
     Group* group = bot->GetGroup();
 
+    // 如果机器人不在战场也不在随机本，且机器人有队伍，那么如果队长不是真实玩家，就退队重置策略
+    bool _needquitteam = false;
+
     if (!bot->InBattleground() && !bot->inRandomLfgDungeon() && !group->isLFGGroup())
     {
         Player* leader = group->GetLeader();
@@ -374,12 +521,14 @@ void PlayerbotAI::UpdateAIGroupMembership()
             PlayerbotAI* leaderAI = GET_PLAYERBOT_AI(leader);
             if (leaderAI && !leaderAI->IsRealPlayer())
             {
-                WorldPacket* packet = new WorldPacket(CMSG_GROUP_DISBAND);
-                bot->GetSession()->QueuePacket(packet);
-                // bot->RemoveFromGroup();
-                ResetStrategies();
+                _needquitteam = true;
             }
         }
+        if (!leader)  // 如果队长离线时
+        {
+            _needquitteam = true;
+        }
+
     }
     else if (group->isLFGGroup())
     {
@@ -401,12 +550,18 @@ void PlayerbotAI::UpdateAIGroupMembership()
         }
         if (!hasRealPlayer)
         {
-            WorldPacket* packet = new WorldPacket(CMSG_GROUP_DISBAND);
-            bot->GetSession()->QueuePacket(packet);
-            // bot->RemoveFromGroup();
-            ResetStrategies();
+            _needquitteam = true;
         }
     }
+
+    if (_needquitteam == true)
+    {
+        WorldPacket* packet = new WorldPacket(CMSG_GROUP_DISBAND);
+        bot->GetSession()->QueuePacket(packet);
+        // bot->RemoveFromGroup();
+        ResetStrategies();
+    }
+
 }
 
 void PlayerbotAI::UpdateAIInternal([[maybe_unused]] uint32 elapsed, bool minimal)
@@ -501,7 +656,8 @@ void PlayerbotAI::HandleCommands()
 
         const std::string& command = it->GetCommand();
         Player* owner = it->GetOwner();
-        if (!helper.ParseChatCommand(command, owner) && it->GetType() == CHAT_MSG_WHISPER)
+        bool israndombot = sRandomPlayerbotMgr->IsRandomBot(bot);
+        if (!helper.ParseChatCommand(command, owner) && it->GetType() == CHAT_MSG_WHISPER && israndombot)
         {
             // ostringstream out; out << "Unknown command " << command;
             // TellPlayer(out);
@@ -685,7 +841,8 @@ void PlayerbotAI::HandleCommand(uint32 type, const std::string& text, Player& fr
 
 void PlayerbotAI::HandleTeleportAck()
 {
-    if (IsRealPlayer())
+    // 这里要加上!bot->GetSession()->IsBot()，否则玩家机器人，.bot free的时候，会当做真人，导致return无法传送
+    if (IsRealPlayer() && !bot->GetSession()->IsBot())
         return;
 
     bot->GetMotionMaster()->Clear(true);
@@ -2568,6 +2725,11 @@ bool PlayerbotAI::TellMasterNoFacing(std::ostringstream& stream, PlayerbotSecuri
 
 bool PlayerbotAI::TellMasterNoFacing(std::string const text, PlayerbotSecurityLevel securityLevel)
 {
+    // 玩家机器人，屏蔽所有对话
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot))
+        return false;
+    // end -----------
+
     Player* master = GetMaster();
     PlayerbotAI* masterBotAI = nullptr;
     if (master)
@@ -2859,6 +3021,17 @@ bool PlayerbotAI::CanCastSpell(uint32 spellid, Unit* target, bool checkHasSpell,
         return false;
     }
 
+    // 禁用有问题的技能，这个是问答防止挂机脚本的lua释放的技能,防止机器人被踢，这里禁用该技能
+    if (spellid == 6537)
+    {
+        LOG_DEBUG(
+            "playerbots",
+            "Can cast spell failed. this spellid is disabled. - spellid: {}, bot name: {} castitem: {} itemtarget:{}",
+            spellid, bot->GetName(), castItem->GetEntry(), itemTarget->GetEntry());
+        return false;
+    }
+
+
     if (bot->HasUnitState(UNIT_STATE_LOST_CONTROL))
     {
         if (!sPlayerbotAIConfig->logInGroupOnly || (bot->GetGroup() && HasRealPlayerMaster()))
@@ -3133,6 +3306,20 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget)
 
     if (!target)
         target = bot;
+
+    // 禁用有问题的技能
+    if (spellId == 6537)
+    {
+        return false;
+    }
+
+    // 无主人的机器人，如果不在视野范围禁止攻击
+    if (!GetMaster())
+    {
+        if (!bot->IsWithinLOSInMap(target, VMAP::ModelIgnoreFlags::M2, LINEOFSIGHT_ALL_CHECKS))
+            return false;
+    }
+
 
     Pet* pet = bot->GetPet();
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
@@ -4025,6 +4212,10 @@ bool PlayerbotAI::HasPlayerNearby(WorldPosition* pos, float range)
             if (player->GetMapId() != bot->GetMapId())
                 continue;
 
+            // 如果是玩家机器人，跳过
+            if (player->GetSession()->IsBot())
+                continue;
+
             if (pos->sqDistance(WorldPosition(player)) < sqRange)
                 nearPlayer = true;
 
@@ -4125,6 +4316,21 @@ inline bool ZoneHasRealPlayers(Player* bot)
 
 bool PlayerbotAI::AllowActive(ActivityType activityType)
 {
+    bool getnearplayer_ = HasPlayerNearby(sPlayerbotAIConfig->BotActiveAloneForceWhenInRadius);
+
+    // 优先特殊处理：如果是玩家机器人，附近有真人就不动
+    if (getnearplayer_ && (!bot->GetMap()->IsDungeon() && !bot->GetMap()->IsBattlegroundOrArena()) &&
+        !bot->IsInCombat())
+    {
+        if (IsRealPlayer() && bot->GetSession()->IsBot())
+        {
+            // LOG_ERROR("xx", "HasPlayerNearbyxx ");//测试
+            return false;
+        }
+    }
+    // end -------------
+
+
     // when botActiveAlone is 100% and smartScale disabled
     if (sPlayerbotAIConfig->botActiveAlone >= 100 && !sPlayerbotAIConfig->botActiveAloneSmartScale)
     {
@@ -4193,7 +4399,7 @@ bool PlayerbotAI::AllowActive(ActivityType activityType)
     }
 
     // Player is near. Always active.
-    if (HasPlayerNearby(sPlayerbotAIConfig->BotActiveAloneForceWhenInRadius))
+    if (getnearplayer_)
     {
         return true;
     }

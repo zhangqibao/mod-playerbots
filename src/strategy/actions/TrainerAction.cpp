@@ -163,6 +163,9 @@ bool MaintenanceAction::Execute(Event event)
         return false;
     }
 
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot))
+        return false;
+
     botAI->TellMaster("I'm maintaining");
     PlayerbotFactory factory(bot, bot->GetLevel());
     factory.InitAttunementQuests();

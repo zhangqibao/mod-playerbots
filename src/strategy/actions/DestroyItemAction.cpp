@@ -47,7 +47,8 @@ bool SmartDestroyItemAction::Execute(Event event)
         return false;
 
     // only destoy grey items if with real player/guild
-    if (botAI->HasRealPlayerMaster() && botAI->IsInRealGuild())
+    // 这里需要判断是否是真人玩家角色的机器人
+    if ((botAI->HasRealPlayerMaster() && botAI->IsInRealGuild()) || (botAI->IsRealPlayer()))
     {
         std::set<Item*> items;
         FindItemsToTradeByQualityVisitor visitor(ITEM_QUALITY_POOR, 5);

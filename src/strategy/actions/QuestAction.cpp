@@ -213,6 +213,11 @@ bool QuestAction::ProcessQuests(WorldObject* questGiver)
 
 bool QuestAction::AcceptQuest(Quest const* quest, ObjectGuid questGiver)
 {
+    // 判断是否是玩家账号下的机器人，玩家账号的机器人不自动同步任务
+    uint32 botAccount = sCharacterCache->GetCharacterAccountIdByGuid(bot->GetGUID());
+    bool isRandomBot = sRandomPlayerbotMgr->IsRandomBot(bot->GetGUID().GetCounter());
+    bool isRandomAccount = sPlayerbotAIConfig->IsInRandomAccountList(botAccount);
+
     std::ostringstream out;
 
     uint32 questId = quest->GetQuestId();
@@ -238,7 +243,7 @@ bool QuestAction::AcceptQuest(Quest const* quest, ObjectGuid questGiver)
         p.rpos(0);
         bot->GetSession()->HandleQuestgiverAcceptQuestOpcode(p);
 
-        if (bot->GetQuestStatus(questId) == QUEST_STATUS_NONE && sPlayerbotAIConfig->syncQuestWithPlayer)
+        if (bot->GetQuestStatus(questId) == QUEST_STATUS_NONE && sPlayerbotAIConfig->syncQuestWithPlayer && isRandomAccount && isRandomBot)
         {
             Object* pObject = ObjectAccessor::GetObjectByTypeMask(*bot, questGiver,
                                                                   TYPEMASK_UNIT | TYPEMASK_GAMEOBJECT | TYPEMASK_ITEM);

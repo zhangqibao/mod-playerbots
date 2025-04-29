@@ -84,7 +84,7 @@ AiPlayerbot.RandomBotAutologin = 1
 # Random bot count
 #允许的最少和最多随机bots
 AiPlayerbot.MinRandomBots = 500
-AiPlayerbot.MaxRandomBots = 500
+AiPlayerbot.MaxRandomBots = 600
 
 # Random bot accounts
 # If you are not using any expansion at all, you may have to set this manually, then
@@ -828,6 +828,9 @@ AiPlayerbot.RandomBotTeleHigherLevel = 1
 # Default: 1 (enabled)
 #机器人升级后会自动传送到另一个地方进行升级
 AiPlayerbot.AutoTeleportForLevel = 1
+
+#多少级以下的机器人禁止随机传送
+AiPlayerbot.AutoTeleportMinLevel = 6
 
 #
 #

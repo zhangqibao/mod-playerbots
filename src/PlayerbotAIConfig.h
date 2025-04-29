@@ -312,6 +312,8 @@ public:
     bool freeFood;
     bool autoLearnQuestSpells;
     bool autoTeleportForLevel;
+    uint32 autoTeleportMinLevel;
+
     bool randomBotGroupNearby;
     bool enableRandomBotTrading;
     uint32 tweakValue;  // Debugging config
