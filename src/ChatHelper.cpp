@@ -121,6 +121,7 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     chats["whisper"] = CHAT_MSG_WHISPER;
     chats["w"] = CHAT_MSG_WHISPER;
 
+    /*
     classes[CLASS_DRUID] = "druid";
     specs[CLASS_DRUID][0] = "balance";
     specs[CLASS_DRUID][1] = "feral combat";
@@ -181,6 +182,69 @@ ChatHelper::ChatHelper(PlayerbotAI* botAI) : PlayerbotAIAware(botAI)
     races[RACE_UNDEAD_PLAYER] = "Undead";
     races[RACE_BLOODELF] = "Blood Elf";
     races[RACE_DRAENEI] = "Draenei";
+    */
+
+    classes[CLASS_DRUID] = "小德";
+    specs[CLASS_DRUID][0] = "平衡";
+    specs[CLASS_DRUID][1] = "野性";
+    specs[CLASS_DRUID][2] = "恢复";
+
+    classes[CLASS_HUNTER] = "猎人";
+    specs[CLASS_HUNTER][0] = "兽王";
+    specs[CLASS_HUNTER][1] = "射击";
+    specs[CLASS_HUNTER][2] = "生存";
+
+    classes[CLASS_MAGE] = "法师";
+    specs[CLASS_MAGE][0] = "奥术";
+    specs[CLASS_MAGE][1] = "火焰";
+    specs[CLASS_MAGE][2] = "冰霜";
+
+    classes[CLASS_PALADIN] = "圣骑";
+    specs[CLASS_PALADIN][0] = "神圣";
+    specs[CLASS_PALADIN][1] = "防护";
+    specs[CLASS_PALADIN][2] = "惩戒";
+
+    classes[CLASS_PRIEST] = "牧师";
+    specs[CLASS_PRIEST][0] = "戒律";
+    specs[CLASS_PRIEST][1] = "神圣";
+    specs[CLASS_PRIEST][2] = "暗影";
+
+    classes[CLASS_ROGUE] = "盗贼";
+    specs[CLASS_ROGUE][0] = "刺杀";
+    specs[CLASS_ROGUE][1] = "战斗";
+    specs[CLASS_ROGUE][2] = "敏锐";
+
+    classes[CLASS_SHAMAN] = "萨满";
+    specs[CLASS_SHAMAN][0] = "自然";
+    specs[CLASS_SHAMAN][1] = "增强";
+    specs[CLASS_SHAMAN][2] = "恢复";
+
+    classes[CLASS_WARLOCK] = "术士";
+    specs[CLASS_WARLOCK][0] = "痛苦";
+    specs[CLASS_WARLOCK][1] = "恶魔";
+    specs[CLASS_WARLOCK][2] = "毁灭";
+
+    classes[CLASS_WARRIOR] = "战士";
+    specs[CLASS_WARRIOR][0] = "武器";
+    specs[CLASS_WARRIOR][1] = "狂暴";
+    specs[CLASS_WARRIOR][2] = "防护";
+
+    classes[CLASS_DEATH_KNIGHT] = "DK";
+    specs[CLASS_DEATH_KNIGHT][0] = "鲜血";
+    specs[CLASS_DEATH_KNIGHT][1] = "冰霜";
+    specs[CLASS_DEATH_KNIGHT][2] = "邪恶";
+
+    races[RACE_DWARF] = "矮人";
+    races[RACE_GNOME] = "侏儒";
+    races[RACE_HUMAN] = "人类";
+    races[RACE_NIGHTELF] = "暗夜精灵";
+    races[RACE_ORC] = "兽人";
+    races[RACE_TAUREN] = "牛头";
+    races[RACE_TROLL] = "巨魔";
+    races[RACE_UNDEAD_PLAYER] = "亡灵";
+    races[RACE_BLOODELF] = "血精灵";
+    races[RACE_DRAENEI] = "德莱尼";
+
 }
 
 std::string const ChatHelper::formatMoney(uint32 copper)
@@ -347,6 +411,7 @@ std::string const ChatHelper::FormatWorldobject(WorldObject* wo)
 
 std::string const ChatHelper::FormatWorldEntry(int32 entry)
 {
+    /*
     CreatureTemplate const* cInfo = nullptr;
     GameObjectTemplate const* gInfo = nullptr;
 
@@ -368,6 +433,52 @@ std::string const ChatHelper::FormatWorldEntry(int32 entry)
 
     out << "]|h|r";
     return out.str();
+    */
+    
+    CreatureTemplate const* cInfo = nullptr;
+    GameObjectTemplate const* gInfo = nullptr;
+
+    if (entry > 0)
+        cInfo = sObjectMgr->GetCreatureTemplate(entry);
+    else
+        gInfo = sObjectMgr->GetGameObjectTemplate(entry * -1);
+
+
+    CreatureLocale const* clocale = nullptr;
+    GameObjectLocale const* glocale = nullptr;
+    std::string objectName;
+
+    if (entry > 0)
+        clocale = sObjectMgr->GetCreatureLocale(entry);
+    else
+        glocale = sObjectMgr->GetGameObjectLocale(entry * -1);
+
+    if (clocale && clocale->Name.size() > sWorld->GetDefaultDbcLocale())
+        objectName = clocale->Name[sWorld->GetDefaultDbcLocale()];
+
+    if (glocale && glocale->Name.size() > sWorld->GetDefaultDbcLocale())
+        objectName = glocale->Name[sWorld->GetDefaultDbcLocale()];
+
+    if (objectName.empty())
+    {
+        if (entry < 0 && gInfo)
+            objectName = gInfo->name;
+        else if (entry > 0 && cInfo)
+            objectName = cInfo->Name;
+        else
+            objectName = "unknown";
+    }
+
+
+    std::ostringstream out;
+    out << "|cFFFFFF00|Hentry:" << abs(entry) << ":"
+        << "|h[";
+
+    out << objectName;
+
+    out << "]|h|r";
+    return out.str();
+    
 }
 
 std::string const ChatHelper::FormatSpell(SpellInfo const* spellInfo)

@@ -151,6 +151,7 @@ void SuggestWhatToDoAction::grindReputation()
 {
     if (factions.empty())
     {
+        /*
         factions["Argent Dawn"] = 60;
         factions["Bloodsail Buccaneers"] = 40;
         factions["Brood of Nozdormu"] = 60;
@@ -185,6 +186,41 @@ void SuggestWhatToDoAction::grindReputation()
         factions["Knights of the Ebon Blade"] = 77;
         factions["The Sons of Hodir"] = 78;
         factions["The Wyrmrest Accord"] = 77;
+        */
+        factions["银色黎明"] = 60;
+        factions["血帆海盗"] = 40;
+        factions["诺兹多姆的子嗣"] = 60;
+        factions["塞纳里奥议会"] = 55;
+        factions["暗月马戏团"] = 20;
+        factions["海达希亚水元素"] = 60;
+        factions["拉文霍德"] = 20;
+        factions["瑟银兄弟会"] = 40;
+        factions["木喉要塞"] = 50;
+        factions["冬刃豹训练师"] = 50;
+        factions["藏宝海湾"] = 30;
+        factions["永望镇"] = 40;
+        factions["加基森"] = 50;
+        factions["棘齿城"] = 20;
+
+        factions["灰舌死誓者"] = 70;
+        factions["塞纳里奥远征队"] = 62;
+        factions["星界财团"] = 65;
+        factions["荣耀堡"] = 66;
+        factions["时光守护者"] = 68;
+        factions["灵翼之龙"] = 65;
+        factions["奥格瑞拉"] = 65;
+        factions["流沙之鳞"] = 65;
+        factions["孢子村"] = 65;
+        factions["塔奎林"] = 10;
+        factions["紫罗兰之眼"] = 70;
+
+        factions["银色北伐军"] = 75;
+        factions["灰烬审判军"] = 75;
+        factions["卡鲁亚克"] = 72;
+        factions["肯瑞托"] = 75;
+        factions["黑锋骑士团"] = 77;
+        factions["霍迪尔之子"] = 78;
+        factions["龙眠联军"] = 77;
     }
 
     std::vector<std::string> levels;
@@ -266,6 +302,7 @@ bool SuggestDungeonAction::Execute(Event event)
 
     if (instances.empty())
     {
+        /*
         instances["Ragefire Chasm"] = 15;
         instances["Deadmines"] = 18;
         instances["Wailing Caverns"] = 18;
@@ -308,6 +345,49 @@ bool SuggestDungeonAction::Execute(Event event)
         instances["Forge of Souls"] = 80;
         instances["Pit of Saron"] = 80;
         instances["Halls of Reflection"] = 80;
+        */
+        instances["怒焰裂谷"] = 15;
+        instances["死亡矿井"] = 18;
+        instances["哀嚎洞穴"] = 18;
+        instances["影牙城堡"] = 25;
+        instances["黑暗深渊"] = 20;
+        instances["暴风城监狱"] = 20;
+        instances["诺莫瑞根"] = 35;
+        instances["剃刀沼泽"] = 35;
+        instances["玛拉顿"] = 50;
+        instances["血色修道院"] = 40;
+        instances["奥达曼"] = 45;
+        instances["厄运之槌"] = 58;
+        instances["通灵学院"] = 59;
+        instances["剃刀高地"] = 40;
+        instances["斯坦索姆"] = 59;
+        instances["祖尔法拉克"] = 45;
+        instances["黑石深渊"] = 55;
+        instances["阿塔哈卡神庙"] = 55;
+        instances["黑石塔下层"] = 57;
+
+        instances["地狱火堡垒"] = 65;
+        instances["盘牙水库"] = 65;
+        instances["奥金顿"] = 65;
+        instances["时光之穴"] = 68;
+        instances["风暴要塞"] = 69;
+        instances["魔导师平台"] = 70;
+
+        instances["乌特加德城堡"] = 75;
+        instances["魔枢"] = 75;
+        instances["安卡赫特：古代王国"] = 75;
+        instances["艾卓-尼鲁布"] = 75;
+        instances["德拉克萨隆要塞"] = 75;
+        instances["紫罗兰监狱"] = 80;
+        instances["古达克"] = 77;
+        instances["岩石大厅"] = 77;
+        instances["闪电大厅"] = 77;
+        instances["魔环"] = 77;
+        instances["乌特加德之巅"] = 77;
+        instances["冠军的试炼"] = 80;
+        instances["灵魂洪炉"] = 80;
+        instances["萨隆矿坑"] = 80;
+        instances["映像大厅"] = 80;
     }
 
     std::vector<std::string> allowedInstances;
