@@ -479,6 +479,22 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
         return;
     }
 
+    // 单独放到前面，无条件加入世界频道
+    if (bot->GetLevel() >= 1 && sRandomPlayerbotMgr->IsRandomBot(bot) && GET_PLAYERBOT_AI(bot) &&
+        GET_PLAYERBOT_AI(bot)->GetGrouperType() != GrouperType::SOLO)
+    {
+        // TODO make action/config
+        // Make the bot join the world channel for chat
+        WorldPacket pkt(CMSG_JOIN_CHANNEL);
+        pkt << uint32(0) << uint8(0) << uint8(0);
+        pkt << std::string("World");
+        pkt << "";  // Pass
+        bot->GetSession()->HandleJoinChannel(pkt);
+
+        //LOG_ERROR("xx", "joinWorld botguid {} ", bot->GetGUID().GetCounter());  // 测试
+    }
+    //end ------------
+
     Player* master = botAI->GetMaster();
     if (!master)
     {

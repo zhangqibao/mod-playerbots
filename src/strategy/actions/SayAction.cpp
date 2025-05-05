@@ -521,6 +521,8 @@ bool ChatReplyAction::SendGeneralResponse(Player* bot, ChatChannelSource chatCha
         }
         case ChatChannelSource::SRC_GENERAL:
         {
+            LOG_ERROR("xx", "SRC_GENERAL SendGeneralResponse {} GUID {} resforname {}", responseMessage,
+                      bot->GetGUID().GetCounter(), name.c_str());  // 测试
             //may reply to the same channel 80% or whisper
             if (urand(0, 100) < 80)
                 GET_PLAYERBOT_AI(bot)->SayToChannel(responseMessage, ChatChannelId::GENERAL);
@@ -572,6 +574,7 @@ bool ChatReplyAction::SendGeneralResponse(Player* bot, ChatChannelSource chatCha
         }
         case ChatChannelSource::SRC_GUILD:
         {
+            //LOG_ERROR("xx", "SRC_GUILD SendGeneralResponse {} GUID {} resforname {}", responseMessage, bot->GetGUID().GetCounter(),name.c_str());  // 测试
             GET_PLAYERBOT_AI(bot)->SayToGuild(responseMessage);
             break;
         }
@@ -579,10 +582,11 @@ bool ChatReplyAction::SendGeneralResponse(Player* bot, ChatChannelSource chatCha
             break;
     }
     GET_PLAYERBOT_AI(bot)->GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Set(time(0) + urand(5, 25));
+    //LOG_ERROR("xx", "klastChat {} time(0) {} guid {}",GET_PLAYERBOT_AI(bot)->GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Get(), time(0),bot->GetGUID().GetCounter());  // 测试
 
     return true;
 }
-
+/*
 std::string ChatReplyAction::GenerateReplyMessage(Player* bot, std::string& incomingMessage, uint32& guid1, std::string& name)
 {
     ChatReplyType replyType = REPLY_NOT_UNDERSTAND; // default not understand
@@ -1029,6 +1033,515 @@ std::string ChatReplyAction::GenerateReplyMessage(Player* bot, std::string& inco
             found = true;
             break;
         }
+        }
+    }
+
+    if (!found)
+    {
+        // Name Responds
+        if (incomingMessage.find(bot->GetName()) != std::string::npos)
+        {
+            replyType = REPLY_NAME;
+            found = true;
+        }
+        else  // Does not understand
+        {
+            replyType = REPLY_NOT_UNDERSTAND;
+            found = true;
+        }
+    }
+
+    // load text if needed
+    if (respondsText.empty())
+    {
+        respondsText = BOT_TEXT2(replyType, name);
+    }
+
+    if (respondsText.size() > 255)
+    {
+        respondsText.resize(255);
+    }
+
+    return respondsText;
+}
+*/
+
+std::string ChatReplyAction::GenerateReplyMessage(Player* bot, std::string& incomingMessage, uint32& guid1,
+                                                  std::string& name)
+{
+    ChatReplyType replyType = REPLY_NOT_UNDERSTAND;  // default not understand
+
+    std::string respondsText = "";
+
+    // Chat Logic
+    int32 verb_pos = -1;
+    int32 verb_type = -1;
+    int32 is_quest = 0;
+    bool found = false;
+    std::stringstream text(incomingMessage);
+    std::string segment;
+    std::vector<std::string> word;
+    while (std::getline(text, segment, ' '))
+    {
+        word.push_back(segment);
+    }
+
+    for (uint32 i = 0; i < 15; i++)
+    {
+        if (word.size() < i)
+            word.push_back("");
+    }
+
+    if (incomingMessage.find("?") != std::string::npos)
+        is_quest = 1;
+    if (incomingMessage.find("？") != std::string::npos)
+        is_quest = 1;
+    if (word[0].find("what") != std::string::npos)
+        is_quest = 2;
+    else if(word[0].find("什么") != std::string::npos)
+        is_quest = 2;
+    else if(word[0].find("啥") != std::string::npos)
+        is_quest = 2;
+    else if (word[0].find("who") != std::string::npos)
+        is_quest = 3;
+    else if (word[0].find("谁") != std::string::npos)
+        is_quest = 3;
+    else if (word[0] == "when")
+        is_quest = 4;
+    else if (word[0] == "什么时候")
+        is_quest = 4;
+    else if (word[0] == "啥时候")
+        is_quest = 4;
+    else if (word[0] == "where")
+        is_quest = 5;
+    else if (word[0] == "在哪")
+        is_quest = 5;
+    else if (word[0] == "啥地方")
+        is_quest = 5;
+    else if (word[0] == "why")
+        is_quest = 6;
+    else if (word[0] == "为什么")
+        is_quest = 6;
+    else if (word[0] == "为啥")
+        is_quest = 6;
+
+    // Responds
+    for (uint32 i = 0; i < 8; i++)
+    {
+        // blame gm with chat tag
+        if (Player* plr = ObjectAccessor::FindPlayer(ObjectGuid(HighGuid::Player, guid1)))
+        {
+            if (plr->isGMChat())
+            {
+                replyType = REPLY_ADMIN_ABUSE;
+                found = true;
+                break;
+            }
+        }
+
+        if (word[i] == "hi" || word[i] == "hey" || word[i] == "hello" || word[i] == "wazzup"|| word[i] == "你好" || word[i] == "在吗")
+        {
+            replyType = REPLY_HELLO;
+            found = true;
+            break;
+        }
+
+        if (verb_type < 4)
+        {
+            if (word[i] == "am" || word[i] == "are" || word[i] == "is" || word[i] == "是")
+            {
+                verb_pos = i;
+                verb_type = 2;  // present
+                if (verb_pos == 0)
+                    is_quest = 1;
+            }
+            else if (word[i] == "will" || word[i] == "将" || word[i] == "将要" || word[i] == "即将" || word[i] == "就要")
+            {
+                verb_pos = i;
+                verb_type = 3;  // future
+            }
+            else if (word[i] == "was" || word[i] == "were" || word[i] == "过了")
+            {
+                verb_pos = i;
+                verb_type = 1;  // past
+            }
+            else if (word[i] == "shut" || word[i] == "noob" || word[i] == "闭嘴" || word[i] == "收声")
+            {
+                if (incomingMessage.find(bot->GetName()) == std::string::npos)
+                {
+                    continue;  // not react
+                    uint32 rnd = urand(0, 2);
+                    std::string msg = "";
+                    if (rnd == 0)
+                        msg = "抱歉 %s, 我不说了";
+                    if (rnd == 1)
+                        msg = "好吧 好吧 %s";
+                    if (rnd == 2)
+                        msg = "行, 我不会再跟你继续说了 %s";
+
+                    msg = std::regex_replace(msg, std::regex("%s"), name);
+                    respondsText = msg;
+                    found = true;
+                    break;
+                }
+                else
+                {
+                    replyType = REPLY_GRUDGE;
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+    if (verb_type < 4 && is_quest && !found)
+    {
+        switch (is_quest)
+        {
+            case 2:
+            {
+                uint32 rnd = urand(0, 3);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "我不知道";
+                        break;
+                    case 1:
+                        msg = "我不知道 %s";
+                        break;
+                    case 2:
+                        msg = "算了";
+                        break;
+                    case 3:
+                        msg = "恐怕那是在我还没出现之前";
+                        break;
+                }
+
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
+            case 3:
+            {
+                uint32 rnd = urand(0, 4);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "没人";
+                        break;
+                    case 1:
+                        msg = "我们都是";
+                        break;
+                    case 2:
+                        msg = "也许是你， %s";
+                        break;
+                    case 3:
+                        msg = "我也不清楚， %s";
+                        break;
+                    case 4:
+                        msg = "是我吗？";
+                        break;
+                }
+
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
+            case 4:
+            {
+                uint32 rnd = urand(0, 6);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "可能一会就好 %s";
+                        break;
+                    case 1:
+                        msg = "可能要等一会";
+                        break;
+                    case 2:
+                        msg = "从不";
+                        break;
+                    case 3:
+                        msg = "我看起来像什么，算命的？";
+                        break;
+                    case 4:
+                        msg = "几分钟 几小时 或者 ... 几年？";
+                        break;
+                    case 5:
+                        msg = "什么时候 这是个好问题 %s";
+                        break;
+                    case 6:
+                        msg = "我不清楚 %s";
+                        break;
+                }
+
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
+            case 5:
+            {
+                uint32 rnd = urand(0, 6);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "你真的想让我回答这个吗？";
+                        break;
+                    case 1:
+                        msg = "在那个地图上吗？";
+                        break;
+                    case 2:
+                        msg = "没人会在意";
+                        break;
+                    case 3:
+                        msg = "暂离了吗";
+                        break;
+                    case 4:
+                        msg = "在哪不关你事";
+                        break;
+                    case 5:
+                        msg = "是的，在哪？";
+                        break;
+                    case 6:
+                        msg = "不知道 %s";
+                        break;
+                }
+
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
+            case 6:
+            {
+                uint32 rnd = urand(0, 6);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "不知道 %s";
+                        break;
+                    case 1:
+                        msg = "为什么？是因为 %s";
+                        break;
+                    case 2:
+                        msg = "为什么天空是蓝色的？";
+                        break;
+                    case 3:
+                        msg = "别问我 %s，我只是个机器人";
+                        break;
+                    case 4:
+                        msg = "你问错人了";
+                        break;
+                    case 5:
+                        msg = "谁会知道？";
+                        break;
+                    case 6:
+                        msg = "不晓得 %s";
+                        break;
+                }
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
+            default:
+            {
+                switch (verb_type)
+                {
+                    case 1:
+                    {
+                        uint32 rnd = urand(0, 3);
+                        std::string msg = "";
+
+                        switch (rnd)
+                        {
+                            case 0:
+                                msg = "真的！ " + word[verb_pos + 1] + " " + word[verb_pos] + " " +
+                                      word[verb_pos + 2] + " " + word[verb_pos + 3] + " " + word[verb_pos + 4] + " " +
+                                      word[verb_pos + 4];
+                                break;
+                            case 1:
+                                msg = "是的 %s 但那都是过去的事了";
+                                break;
+                            case 2:
+                                msg = "不是, 但 " + word[verb_pos + 1] + " 将会 " + word[verb_pos + 3] +
+                                      " %s";
+                                break;
+                            case 3:
+                                msg = "恐怕那是在我还没来之前";
+                                break;
+                        }
+                        msg = std::regex_replace(msg, std::regex("%s"), name);
+                        respondsText = msg;
+                        found = true;
+                        break;
+                    }
+                    case 2:
+                    {
+                        uint32 rnd = urand(0, 6);
+                        std::string msg = "";
+
+                        switch (rnd)
+                        {
+                            case 0:
+                                msg = "是真的， " + word[verb_pos + 1] + " " + word[verb_pos] + " " +
+                                      word[verb_pos + 2] + " " + word[verb_pos + 3] + " " + word[verb_pos + 4] + " " +
+                                      word[verb_pos + 5];
+                                break;
+                            case 1:
+                                msg = "嗯 %s 没错";
+                                break;
+                            case 2:
+                                msg = "可能 " + word[verb_pos + 1] + " " + word[verb_pos] + " " + word[verb_pos + 2] +
+                                      " " + word[verb_pos + 3] + " " + word[verb_pos + 4] + " " + word[verb_pos + 5];
+                                break;
+                            case 3:
+                                msg = "不清楚 %s";
+                                break;
+                            case 4:
+                                msg = "我不这么认为 %s";
+                                break;
+                            case 5:
+                                msg = "是的";
+                                break;
+                            case 6:
+                                msg = "不是";
+                                break;
+                        }
+                        msg = std::regex_replace(msg, std::regex("%s"), name);
+                        respondsText = msg;
+                        found = true;
+                        break;
+                    }
+                    case 3:
+                    {
+                        uint32 rnd = urand(0, 8);
+                        std::string msg = "";
+
+                        switch (rnd)
+                        {
+                            case 0:
+                                msg = "不知道 %s";
+                                break;
+                            case 1:
+                                msg = "我也不知道 %s";
+                                break;
+                            case 2:
+                                msg = "我怎么知道 %s";
+                                break;
+                            case 3:
+                                msg = "别问我 %s ，我就是个AI";
+                                break;
+                            case 4:
+                                msg = "你问错人了";
+                                break;
+                            case 5:
+                                msg = "我像什么，算命的？";
+                                break;
+                            case 6:
+                                msg = "没错 %s";
+                                break;
+                            case 7:
+                                msg = "我不这么认为 %s";
+                                break;
+                            case 8:
+                                msg = "大概是";
+                                break;
+                        }
+                        msg = std::regex_replace(msg, std::regex("%s"), name);
+                        respondsText = msg;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    else if (!found)
+    {
+        switch (verb_type)
+        {
+            case 1:
+            {
+                uint32 rnd = urand(0, 2);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "是的 %s， 关键词是 " + word[verb_pos] + " " + word[verb_pos + 1];
+                        break;
+                    case 1:
+                        msg = "是的 %s 但那都是过去的事了";
+                        break;
+                    case 2:
+                        msg = word[verb_pos ? verb_pos - 1 : verb_pos + 1] + " 将 " + word[verb_pos + 1] +
+                              " %s";
+                        break;
+                }
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
+            case 2:
+            {
+                uint32 rnd = urand(0, 2);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "%s，" + word[verb_pos + 1] + "是什么意思？";
+                        break;
+                    case 1:
+                        msg = "%s，什么是" + word[verb_pos + 1] + "？";
+                        break;
+                    case 2:
+                        msg = "嗯，我知道 " + word[verb_pos ? verb_pos - 1 : verb_pos + 1] + " 是 " +
+                              word[verb_pos + 1];
+                        break;
+                }
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
+            case 3:
+            {
+                uint32 rnd = urand(0, 1);
+                std::string msg = "";
+
+                switch (rnd)
+                {
+                    case 0:
+                        msg = "你确定这会发生吗 %s？";
+                        break;
+                    case 1:
+                        msg = "%s，将会发生什么 %s?";
+                        break;
+                    case 2:
+                        msg = "你是说 " + word[verb_pos ? verb_pos - 1 : verb_pos + 1] + " 将 " +
+                              word[verb_pos + 1] + " " + word[verb_pos + 2] + " %s？";
+                        break;
+                }
+                msg = std::regex_replace(msg, std::regex("%s"), name);
+                respondsText = msg;
+                found = true;
+                break;
+            }
         }
     }
 

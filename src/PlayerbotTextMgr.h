@@ -36,8 +36,8 @@ struct ChatReplyData
 struct ChatQueuedReply
 {
     ChatQueuedReply(uint32 type, uint32 guid1, uint32 guid2, std::string msg, std::string chanName, std::string name,
-                    time_t time)
-        : m_type(type), m_guid1(guid1), m_guid2(guid2), m_msg(msg), m_chanName(chanName), m_name(name), m_time(time)
+                    time_t time, uint32 botguid)
+        : m_type(type), m_guid1(guid1), m_guid2(guid2), m_msg(msg), m_chanName(chanName), m_name(name), m_time(time),m_ownerBotGuid(botguid)
     {
     }
     uint32 m_type;
@@ -47,6 +47,7 @@ struct ChatQueuedReply
     std::string m_chanName;
     std::string m_name;
     time_t m_time;
+    uint32 m_ownerBotGuid;
 };
 
 enum ChatReplyType

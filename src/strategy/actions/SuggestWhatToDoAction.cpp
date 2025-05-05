@@ -224,9 +224,14 @@ void SuggestWhatToDoAction::grindReputation()
     }
 
     std::vector<std::string> levels;
+    /*
     levels.push_back("honored");
     levels.push_back("revered");
     levels.push_back("exalted");
+    */
+    levels.push_back("尊敬");
+    levels.push_back("崇敬");
+    levels.push_back("崇拜");
 
     std::vector<std::string> allowedFactions;
     for (auto it : factions)

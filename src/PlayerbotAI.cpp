@@ -57,6 +57,9 @@
 #include "UpdateTime.h"
 #include "Vehicle.h"
 
+std::unordered_map<uint32, int> PlayerbotAI::s_guidReplyCounts;
+std::mutex PlayerbotAI::s_globalCounterMutex;
+
 std::vector<std::string> PlayerbotAI::dispel_whitelist = {
     "mutating injection",
     "frostbolt",
@@ -585,7 +588,13 @@ void PlayerbotAI::UpdateAIInternal([[maybe_unused]] uint32 elapsed, bool minimal
         }
 
         ChatReplyAction::ChatReplyDo(bot, it->m_type, it->m_guid1, it->m_guid2, it->m_msg, it->m_chanName, it->m_name);
+
+        // 计数器更新
+        s_guidReplyCounts[it->m_guid1]--;
+        //------
+
         it = chatReplies.erase(it);
+
     }
 
     HandleCommands();
@@ -1185,6 +1194,9 @@ void PlayerbotAI::HandleBotOutgoingPacket(WorldPacket const& packet)
                     p >> name;
                 }
 
+                //if (guid1.GetCounter() == 1)
+                //LOG_ERROR("xx", "msgtype {} botguid {} guid1 {} guid2 {}", msgtype,bot->GetGUID().GetCounter(), guid1.GetCounter(), guid2.GetCounter());  // 测试
+
                 switch (msgtype)
                 {
                     case CHAT_MSG_CHANNEL:
@@ -1206,6 +1218,7 @@ void PlayerbotAI::HandleBotOutgoingPacket(WorldPacket const& packet)
                 if (guid1 != bot->GetGUID())
                 {
                     time_t lastChat = GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Get();
+                    //LOG_ERROR("xx", "1lastChat {} time(0) {} guid {}", lastChat, time(0), bot->GetGUID().GetCounter());  // 测试
                     bool isPaused = time(0) < lastChat;
                     bool isFromFreeBot = false;
                     sCharacterCache->GetCharacterNameByGuid(guid1, name);
@@ -1214,6 +1227,11 @@ void PlayerbotAI::HandleBotOutgoingPacket(WorldPacket const& packet)
                     bool isMentioned = message.find(bot->GetName()) != std::string::npos;
 
                     // ChatChannelSource chatChannelSource = GetChatChannelSource(bot, msgtype, chanName);
+
+                    // 如果是回复随机机器人，跳出，避免死循环机器人一直发言
+                    if (isFromFreeBot)
+                        return;
+                    //end ----------------------
 
                     // random bot speaks, chat CD
                     if (isFromFreeBot && isPaused)
@@ -1266,10 +1284,12 @@ void PlayerbotAI::HandleBotOutgoingPacket(WorldPacket const& packet)
                         }
                     }
 
+                    //加入发言队列，并进行队列数量限制
                     QueueChatResponse(ChatQueuedReply{msgtype, guid1.GetCounter(), guid2.GetCounter(), message,
                                                       chanName, name,
-                                                      time(nullptr) + urand(inCombat ? 10 : 5, inCombat ? 25 : 15)});
+                        time(nullptr) + urand(inCombat ? 10 : 5, inCombat ? 25 : 15), bot->GetGUID().GetCounter()});
                     GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Set(time(0) + urand(5, 25));
+                    //LOG_ERROR("xx", "xlastChat {} time(0) {} guid {} guid1 {} guid2 {}", lastChat, time(0), bot->GetGUID().GetCounter(),guid1.GetCounter(), guid2.GetCounter());  // 测试
                     return;
                 }
             }
@@ -5725,7 +5745,64 @@ bool PlayerbotAI::IsInRealGuild()
     return IsRealGuild(bot->GetGuildId());
 }
 
-void PlayerbotAI::QueueChatResponse(const ChatQueuedReply chatReply) { chatReplies.push_back(std::move(chatReply)); }
+void PlayerbotAI::QueueChatResponse(ChatQueuedReply chatReply)
+{
+    const uint32 senderGuid = chatReply.m_guid1;
+
+    // ==== 全局计数器检查 ====
+    {
+        std::lock_guard<std::mutex> globalLock(s_globalCounterMutex);
+        auto& count = s_guidReplyCounts[senderGuid];
+
+        // 全局已达上限则直接拒绝
+        if (count >= MAX_GLOBAL_REPLIES_PER_GUID)
+        {
+            return;
+        }
+
+        // 预占名额（后续若添加失败需回滚）
+        ++count;
+    }
+
+    // ==== 本地队列处理 ====
+    std::lock_guard<std::mutex> localLock(chatQueueMutex);
+
+    // 清理过期回复（需同步更新全局计数器）
+    auto now = time(nullptr);
+    chatReplies.remove_if(
+        [now, this](const auto& reply)
+        {
+            if (reply.m_time <= now)
+            {
+                std::lock_guard<std::mutex> g(s_globalCounterMutex);
+                s_guidReplyCounts[reply.m_guid1]--;  // 过期条目释放名额
+                return true;
+            }
+            return false;
+        });
+
+    // 添加新条目
+    chatReplies.emplace_back(std::move(chatReply));
+
+    // ==== 最终一致性检查 ====
+    // 如果添加后本地队列超过限制，移除并回滚计数器
+    int localCount = std::count_if(chatReplies.begin(), chatReplies.end(),
+                                   [senderGuid](const auto& r) { return r.m_guid1 == senderGuid; });
+
+    if (localCount > MAX_LOCAL_REPLIES_PER_GUID)
+    {
+        auto it = std::find_if(chatReplies.begin(), chatReplies.end(),
+                               [senderGuid](const auto& r) { return r.m_guid1 == senderGuid; });
+        if (it != chatReplies.end())
+        {
+            chatReplies.erase(it);
+            std::lock_guard<std::mutex> g(s_globalCounterMutex);
+            s_guidReplyCounts[senderGuid]--;
+        }
+    }
+
+    //chatReplies.push_back(std::move(chatReply));
+}
 
 bool PlayerbotAI::EqualLowercaseName(std::string s1, std::string s2)
 {
@@ -6073,7 +6150,7 @@ ChatChannelSource PlayerbotAI::GetChatChannelSource(Player* bot, uint32 type, st
 {
     if (type == CHAT_MSG_CHANNEL)
     {
-        if (channelName == "World")
+        if (channelName == "World" || channelName == "world" || channelName == "世界" || channelName == "世界频道")
             return ChatChannelSource::SRC_WORLD;
         else
         {

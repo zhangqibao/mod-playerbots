@@ -605,6 +605,21 @@ private:
     void HandleCommand(uint32 type, const std::string& text, Player& fromPlayer, const uint32 lang = LANG_UNIVERSAL);
     bool _isBotInitializing = false;
 
+    // 全局计数器（guid1 -> 当前回复数量）
+    static std::unordered_map<uint32, int> s_guidReplyCounts;
+    // 单bot计数器
+    std::mutex chatQueueMutex;
+
+    // 机器人回复的数量限制
+    // 全局限制：每个 guid1 最多 5 条回复（所有 Bot 总计）
+    const int MAX_GLOBAL_REPLIES_PER_GUID = 5;
+
+    // 本地限制：每个 Bot 最多 3 条回复（防止单个 Bot 垄断）
+    const int MAX_LOCAL_REPLIES_PER_GUID = 3;
+
+    static std::mutex s_globalCounterMutex;
+    // end------------------
+
 protected:
     Player* bot;
     Player* master;

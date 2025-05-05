@@ -82,9 +82,10 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToGuildGlobalChance
-                    && ai->SayToGuild(message))
+                    )
                 {
-                    return true;
+                    //LOG_ERROR("xx", "roll {} chance {} broadcastRoll {} message {} botGUID {}", roll, chance, broadcastRoll,message,ai->GetBot()->GetGUID().GetCounter());  // 测试
+                    return ai->SayToGuild(message);
                 }
                 break;
             }
@@ -92,9 +93,9 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToWorldGlobalChance
-                    && ai->SayToWorld(message))
+                    )
                 {
-                    return true;
+                    return ai->SayToWorld(message);
                 }
                 break;
             }
@@ -102,9 +103,9 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToGeneralGlobalChance
-                    && ai->SayToChannel(message, ChatChannelId::GENERAL))
+                    )
                 {
-                    return true;
+                    return ai->SayToChannel(message, ChatChannelId::GENERAL);
                 }
                 break;
             }
@@ -112,9 +113,9 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToTradeGlobalChance
-                    && ai->SayToChannel(message, ChatChannelId::TRADE))
+                    )
                 {
-                    return true;
+                    return ai->SayToChannel(message, ChatChannelId::TRADE);
                 }
                 break;
             }
@@ -122,9 +123,9 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToLFGGlobalChance
-                    && ai->SayToChannel(message, ChatChannelId::LOOKING_FOR_GROUP))
+                    )
                 {
-                    return true;
+                    return ai->SayToChannel(message, ChatChannelId::LOOKING_FOR_GROUP);
                 }
                 break;
             }
@@ -132,9 +133,9 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToLocalDefenseGlobalChance
-                    && ai->SayToChannel(message, ChatChannelId::LOCAL_DEFENSE))
+                    )
                 {
-                    return true;
+                    return ai->SayToChannel(message, ChatChannelId::LOCAL_DEFENSE);
                 }
                 break;
             }
@@ -142,9 +143,9 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToWorldDefenseGlobalChance
-                    && ai->SayToChannel(message, ChatChannelId::WORLD_DEFENSE))
+                    )
                 {
-                    return true;
+                    return ai->SayToChannel(message, ChatChannelId::WORLD_DEFENSE);
                 }
                 break;
             }
@@ -152,9 +153,9 @@ bool BroadcastHelper::BroadcastToChannelWithGlobalChance(PlayerbotAI* ai, std::s
             {
                 if (roll <= chance
                     && broadcastRoll <= sPlayerbotAIConfig->broadcastToGuildRecruitmentGlobalChance
-                    && ai->SayToChannel(message, ChatChannelId::GUILD_RECRUITMENT))
+                    )
                 {
-                    return true;
+                    return ai->SayToChannel(message, ChatChannelId::GUILD_RECRUITMENT);
                 }
                 break;
             }
