@@ -37,7 +37,7 @@ uint32 LfgJoinAction::GetRoles()
         case CLASS_DRUID:
             if (spec == 2)
                 return PLAYER_ROLE_HEALER;
-            else if (spec == 1 && bot->HasAura(16931) /* thick hide */)
+            else if (spec == 1 && bot->HasAura(16931) )//thick hide
                 return PLAYER_ROLE_TANK;
             else
                 return PLAYER_ROLE_DAMAGE;
@@ -79,6 +79,34 @@ uint32 LfgJoinAction::GetRoles()
             return PLAYER_ROLE_DAMAGE;
 			break;
     }
+    
+    /*
+    //下面是不分天赋，按直接排本的方案
+    uint8 spec = AiFactory::GetPlayerSpecTab(bot);
+    switch (bot->getClass())
+    {
+        case CLASS_WARRIOR:
+        case CLASS_DRUID:
+        case CLASS_DEATH_KNIGHT:
+            return PLAYER_ROLE_TANK | PLAYER_ROLE_DAMAGE;
+            break;
+        case CLASS_PALADIN:
+            if (spec == 1)
+                return PLAYER_ROLE_TANK;
+            else if (!spec)
+                return PLAYER_ROLE_HEALER;
+            else
+                return PLAYER_ROLE_DAMAGE;
+            break;
+        case CLASS_PRIEST:
+        case CLASS_SHAMAN:
+            return PLAYER_ROLE_HEALER;
+            break;
+        default:
+            return PLAYER_ROLE_DAMAGE;
+            break;
+    }
+    */
 
     return PLAYER_ROLE_DAMAGE;
 }

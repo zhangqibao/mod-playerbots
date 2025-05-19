@@ -564,11 +564,17 @@ AiPlayerbot.RandomBotJoinLfg = 1
 # Enable/Disable periodic online - offline to mimic the real-world scenario where not all players are online simultaneously
 # When enabled, bots are randomly selected to go online or offline periodically from a larger set
 # Default: 0 (disabled, the set of online bots remains fixed)
-AiPlayerbot.EnablePeriodicOnlineOffline = 0
+#启用/禁用定期在线-离线模拟现实世界的情况下，不是所有的球员同时在线
+#当启用时，机器人会从一个较大的集合中随机选择在线或离线
+#默认值：0（禁用，在线机器人集保持固定）
+AiPlayerbot.EnablePeriodicOnlineOffline = 1
 
 # Defines the ratio between the total number of bots (including offline ones) and the number of bots currently online (MaxRandomBots)
 # This setting must greater than 1.0 and only applies when EnablePeriodicOnlineOffline
 # Default: 2.0 (total number of bots is twice the number of MaxRandomBots)
+#定义机器人总数（包括离线机器人）和当前在线机器人数量（MaxRandomBots）之间的比率。
+#此设置必须大于1.0，并且只适用于EnablePeriodicOnlineOffline
+#默认值：2.0（机器人总数是MaxRandomBots数量的两倍）
 AiPlayerbot.PeriodicOnlineOfflineRatio = 2.0
 
 # Percentage ratio of alliance and horde
@@ -576,7 +582,8 @@ AiPlayerbot.RandomBotAllianceRatio = 50
 AiPlayerbot.RandomBotHordeRatio = 50
 
 # Disable death knight for bots login
-AiPlayerbot.DisableDeathKnightLogin = 0
+#禁止DK登录
+AiPlayerbot.DisableDeathKnightLogin = 1
 
 # Enable expansion limitation for talents and glyphs - ie: level <= 60 bot only uses talents
 # available in vanilla, level <= 70 bot only uses talents available in TBC)

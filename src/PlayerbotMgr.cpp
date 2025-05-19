@@ -166,6 +166,7 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder con
     sRandomPlayerbotMgr->OnPlayerLogin(bot);
     OnBotLogin(bot);
 
+    /*
     // 这里是为了禁止DK机器人登录，后期开60后可以注释掉
     if (bot->getClass() == CLASS_DEATH_KNIGHT &&
         sPlayerbotAIConfig->randombotStartingLevel < sWorld->getIntConfig(CONFIG_START_HEROIC_PLAYER_LEVEL))
@@ -176,6 +177,7 @@ void PlayerbotHolder::HandlePlayerBotLoginCallback(PlayerbotLoginQueryHolder con
         sRandomPlayerbotMgr->currentBotsClear(bot->GetGUID().GetCounter());
         LogoutPlayerBot(bot->GetGUID());
     }
+    */
 
 
     botLoading.erase(holder.GetGuid());
@@ -735,17 +737,22 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
                 return "you can only add bots from your own account";
         }
 
-        // 只有管理员可以添加真人角色到bot，普通玩家可以添加自己帐号下的角色
-        if (!isRandomAccount && !isMasterAccount && !admin)
-            return "You cannot login another player's character as bot.";
-        // end --------------------
+        //如果允许添加帐号下机器人，使用这个配置项，1就允许普通玩家添加自己帐号下角色
+        if (sPlayerbotAIConfig->allowAccountBots)
+        {
+            // 只有管理员可以添加真人角色到bot，普通玩家可以添加自己帐号下的角色
+            if (!isRandomAccount && !isMasterAccount && !admin)
+                return "You cannot login another player's character as bot.";
+            // end --------------------
+        }
+        else
+        {
+            // 只有管理员可以添加真人角色到bot
+            if (!sPlayerbotAIConfig->allowAccountBots && !isRandomAccount && !admin)
+                return "You cannot login player's character as bot.";
+            // end ----------------
+        }
 
-        /*
-        //只有管理员可以添加真人角色到bot
-        if (!sPlayerbotAIConfig->allowPlayerBots && !isRandomAccount && !admin)
-            return "You cannot login player's character as bot.";
-        //end ----------------
-        */
 
         if (admin)
         {

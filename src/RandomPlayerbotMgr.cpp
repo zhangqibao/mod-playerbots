@@ -537,12 +537,14 @@ uint32 RandomPlayerbotMgr::AddRandomBots()
                 uint32 rClass = info.rClass;
                 uint32 rRace = info.rRace;
 
+                /*
                 if (rClass == CLASS_DEATH_KNIGHT &&
                     sPlayerbotAIConfig->randombotStartingLevel < sWorld->getIntConfig(CONFIG_START_HEROIC_PLAYER_LEVEL))
                 {
                     // LOG_ERROR("xx", "CLASS_DEATH_KNIGHTxx guid: {} ", guid);//测试,重启没有打印到这里
                     continue;
                 }
+                */
 
                 if (GetEventValue(guid, "add"))
                     continue;

@@ -38,8 +38,8 @@ void ChatCommandHandlerStrategy::InitTriggers(std::vector<TriggerNode*>& trigger
     triggers.push_back(new TriggerNode("inv", NextAction::array(0, new NextAction("item count", relevance), nullptr)));
     triggers.push_back(new TriggerNode("e", NextAction::array(0, new NextAction("equip", relevance), nullptr)));
     triggers.push_back(new TriggerNode("ue", NextAction::array(0, new NextAction("unequip", relevance), nullptr)));
-    triggers.push_back(new TriggerNode("t", NextAction::array(0, new NextAction("trade", relevance), nullptr)));
-    triggers.push_back(new TriggerNode("nt", NextAction::array(0, new NextAction("trade", relevance), nullptr)));
+    //triggers.push_back(new TriggerNode("t", NextAction::array(0, new NextAction("trade", relevance), nullptr)));
+    //triggers.push_back(new TriggerNode("nt", NextAction::array(0, new NextAction("trade", relevance), nullptr)));
     triggers.push_back(new TriggerNode("s", NextAction::array(0, new NextAction("sell", relevance), nullptr)));
     triggers.push_back(new TriggerNode("b", NextAction::array(0, new NextAction("buy", relevance), nullptr)));
     triggers.push_back(new TriggerNode("r", NextAction::array(0, new NextAction("reward", relevance), nullptr)));

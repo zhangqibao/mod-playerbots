@@ -319,6 +319,23 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
         }
         */
 
+        //如果机器人进入战斗，让主人也加入战斗
+        //if (bot->IsAlive() && bot->IsInCombat() && master->IsAlive() && !master->IsInCombat())
+        if (bot->IsAlive() && bot->IsInCombat() && master->IsAlive())
+        {
+            if (ObjectGuid const& _lasttarget = bot->GetLastDamagedTargetGuid())
+            {
+                Creature* creature = GetCreature(_lasttarget);
+                creature->SetInCombatWith(master);
+                master->SetInCombatWith(creature);
+
+                if (creature->CanHaveThreatList())
+                {
+                    creature->AddThreat(master, 0.0f);
+                }
+            }
+        }
+
         // 如果主人在副本中，且机器人是死亡状态，主人不在战斗中，自动复活
         // if (master->IsAlive() && !master->IsInCombat() && !bot->IsAlive() &&
         // master->GetMap()->IsDungeon())//这样写有时候会因为master->IsInCombat()崩掉，因为hasflag访问冲突，怀疑是master传送时不在世界中导致
@@ -327,7 +344,7 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
         {
             bot->TeleportTo(master->GetMapId(), master->GetPositionX(), master->GetPositionY(), master->GetPositionZ(),
                             bot->GetOrientation());
-            bot->ResurrectPlayer(0.5f);
+            bot->ResurrectPlayer(0.1f);
             bot->SpawnCorpseBones();
         }
     }
@@ -515,13 +532,13 @@ void PlayerbotAI::UpdateAIGroupMembership()
 
     // 如果机器人不在战场也不在随机本，且机器人有队伍，那么如果队长不是真实玩家，就退队重置策略
     bool _needquitteam = false;
+    Player* leader = group->GetLeader();
+    PlayerbotAI* leaderAI = GET_PLAYERBOT_AI(leader);
 
     if (!bot->InBattleground() && !bot->inRandomLfgDungeon() && !group->isLFGGroup())
     {
-        Player* leader = group->GetLeader();
         if (leader && leader != bot)  // Ensure the leader is valid and not the bot itself
         {
-            PlayerbotAI* leaderAI = GET_PLAYERBOT_AI(leader);
             if (leaderAI && !leaderAI->IsRealPlayer())
             {
                 _needquitteam = true;
@@ -531,10 +548,27 @@ void PlayerbotAI::UpdateAIGroupMembership()
         {
             _needquitteam = true;
         }
-
     }
     else if (group->isLFGGroup())
     {
+        // 如果配置里的AiPlayerbot.GroupInvitationPermission = 0，仅允许GM邀请机器人，那么就直接退组
+        //LOG_ERROR("xx", "GetState {}  ", sLFGMgr->GetState(leader->GetGUID()));  // 测试
+
+        if (leader && leader->IsInWorld())
+        {
+            if (leaderAI && leaderAI->IsRealPlayer())
+            {
+                if (sPlayerbotAIConfig->groupInvitationPermission <= 0 && !leader->IsGameMaster() &&
+                    !leader->inRandomLfgDungeon() && !leader->IsBeingTeleported() && leader->GetMap() &&
+                    !leader->GetMap()->IsDungeon() && sLFGMgr->GetState(leader->GetGUID()) > lfg::LFG_STATE_NONE && !leader->isDead())
+                {
+                    _needquitteam = true;
+                     //LOG_ERROR("xx", "_needquitteam1 ");  // 测试
+                }
+            }
+        }
+        //end ----------------------------
+
         bool hasRealPlayer = false;
 
         // Iterate over all group members to check if at least one is a real player
@@ -546,23 +580,53 @@ void PlayerbotAI::UpdateAIGroupMembership()
 
             PlayerbotAI* memberAI = GET_PLAYERBOT_AI(member);
             if (memberAI && !memberAI->IsRealPlayer())
+            {
+                //LOG_ERROR("xx", "memberx {}  ", member->GetName());  // 测试
                 continue;
+            }
+                
 
-            hasRealPlayer = true;
+            if (!member->inRandomLfgDungeon() && !member->IsBeingTeleported() && member->GetMap() &&
+                !leader->GetMap()->IsDungeon() && sLFGMgr->GetState(member->GetGUID()) > lfg::LFG_STATE_NONE && !member->isDead())
+            {
+                //有真人，但真人不在随机本里，也设置为无真人
+                //LOG_ERROR("xx", "memberp {}  ", member->GetName());  // 测试
+                continue;
+            }
+            else
+            {
+                //LOG_ERROR("xx", "memberk {}  ", member->GetName());  // 测试
+                hasRealPlayer = true;
+            }
+            
+
             break;
         }
         if (!hasRealPlayer)
         {
             _needquitteam = true;
+            //LOG_ERROR("xx", "_needquitteam2 ");  // 测试
         }
+
     }
 
     if (_needquitteam == true)
     {
-        WorldPacket* packet = new WorldPacket(CMSG_GROUP_DISBAND);
-        bot->GetSession()->QueuePacket(packet);
-        // bot->RemoveFromGroup();
-        ResetStrategies();
+        bool randomBot = sRandomPlayerbotMgr->IsRandomBot(bot);
+
+        //WorldPacket* packet = new WorldPacket(CMSG_GROUP_DISBAND);
+        //bot->GetSession()->QueuePacket(packet);
+        bot->RemoveFromGroup();
+        bot->RemoveAura(71041);
+
+        // 恢复无主人状态
+        if (randomBot)
+        GET_PLAYERBOT_AI(bot)->SetMaster(nullptr);
+        //LOG_ERROR("xx", "botx {}  ", bot->GetName());  // 测试
+
+        // end----------
+        ResetStrategies(true);
+        Reset(true);
     }
 
 }
