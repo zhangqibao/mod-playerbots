@@ -325,13 +325,14 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
         {
             if (ObjectGuid const& _lasttarget = bot->GetLastDamagedTargetGuid())
             {
-                Creature* creature = GetCreature(_lasttarget);
-                creature->SetInCombatWith(master);
-                master->SetInCombatWith(creature);
-
-                if (creature->CanHaveThreatList())
+                if (Creature* creature = GetCreature(_lasttarget))
                 {
-                    creature->AddThreat(master, 0.0f);
+                    master->SetInCombatWith(creature);
+
+                    if (creature->CanHaveThreatList())
+                    {
+                        creature->AddThreat(master, 0.0f);
+                    }
                 }
             }
         }

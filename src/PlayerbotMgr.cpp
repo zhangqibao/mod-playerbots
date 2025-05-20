@@ -923,7 +923,7 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
     
     bool addClassBot = sRandomPlayerbotMgr->IsAddclassBot(guid.GetCounter());
 
-    if (!addClassBot)
+    if (!addClassBot && !admin)
         return "ERROR: You can not use this command on non-addclass bot.";
     
     if (!admin)
@@ -1020,7 +1020,7 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
         }
     }
 
-    if (isRandomAccount)
+    if (isRandomAccount && admin)
     {
         if (cmd == "levelup" || cmd == "level")
         {
@@ -1040,6 +1040,18 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
             factory.ResetTalent();
             return "reset talent ok";
         }
+        else if (cmd == "set1")
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel(), ITEM_QUALITY_RARE);
+            factory.Randomize(false);
+            return "reset equipment green ok";
+        }
+        else if (cmd == "set2")
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel(), ITEM_QUALITY_EPIC);
+            factory.Randomize(false);
+            return "reset equipment blue ok";
+        }
         else if (cmd == "random")
         {
             sRandomPlayerbotMgr->Randomize(bot);
@@ -1052,6 +1064,24 @@ std::string const PlayerbotHolder::ProcessBotCommand(std::string const cmd, Obje
             return "Initialization quests";
         }
     }
+
+    //处理叮号后给装备的命令,用GM帐号 .bot add 添加角色为bot，然后执行.bot set1给绿装一身set2给蓝装一身
+    if (!isRandomAccount && admin)
+    {
+        if (cmd == "set1")
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel(), ITEM_QUALITY_RARE);
+            factory.InitEquipment(true);
+            return "reset equipment green ok";
+        }
+        else if (cmd == "set2")
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel(), ITEM_QUALITY_EPIC);
+            factory.InitEquipment(true);
+            return "reset equipment blue ok";
+        }
+    }
+    //end--------------
     
     // }//if admin
 
