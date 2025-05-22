@@ -201,6 +201,8 @@ bool PlayerbotSecurity::CheckLevelFor(PlayerbotSecurityLevel level, bool silent,
     if (master && botAI && botAI->IsOpposing(master) && master->GetSession()->GetSecurity() < SEC_GAMEMASTER)
         return false;
 
+    /*
+    //不提示，让玩家不知道是真人还是机器人
     std::ostringstream out;
     switch (realLevel)
     {
@@ -296,6 +298,6 @@ bool PlayerbotSecurity::CheckLevelFor(PlayerbotSecurityLevel level, bool silent,
         whispers[guid][text] = time(nullptr);
         bot->Whisper(text, LANG_UNIVERSAL, from);
     }
-
+    */
     return false;
 }

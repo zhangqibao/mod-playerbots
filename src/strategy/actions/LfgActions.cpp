@@ -66,13 +66,13 @@ uint32 LfgJoinAction::GetRoles()
             if (spec == 2)
                 return PLAYER_ROLE_TANK;
             else
-                return PLAYER_ROLE_DAMAGE;
+                return PLAYER_ROLE_TANK | PLAYER_ROLE_DAMAGE;
             break;
         case CLASS_DEATH_KNIGHT:
             if (spec == 0)
                 return PLAYER_ROLE_TANK;
             else
-                return PLAYER_ROLE_DAMAGE;
+                return PLAYER_ROLE_TANK | PLAYER_ROLE_DAMAGE;
             break;
 
         default:
@@ -334,6 +334,11 @@ bool LfgJoinAction::isUseful()
 
     if (bot->GetLevel() < 15)
         return false;
+
+    //如果允许机器人排随机本，这里再增加一个等级限制，这样低级本新人可以组到AI，等级高了就必须和玩家排随机了
+    if (bot->GetLevel() > sPlayerbotAIConfig->randomBotJoinLfgMixLevel)
+        return false;
+    //end --------------------
 	
 	// don't use if active player master
     if (GET_PLAYERBOT_AI(bot)->IsRealPlayer())

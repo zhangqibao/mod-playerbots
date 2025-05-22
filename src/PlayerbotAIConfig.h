@@ -100,6 +100,7 @@ public:
     uint32 randomBotsPerInterval;
     uint32 minRandomBotsPriceChangeInterval, maxRandomBotsPriceChangeInterval;
     bool randomBotJoinLfg;
+    uint32 randomBotJoinLfgMixLevel;
 
     // chat
     bool randomBotTalk;
