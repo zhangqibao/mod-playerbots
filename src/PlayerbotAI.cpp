@@ -283,15 +283,18 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
         //     }
         // }
 
-        // 如果主人和机器人不在一个地区或距离过远，传送到主人
+        // 如果主人和机器人不在一个地区且距离过远，传送到主人（有距离很近，但主人和AI不在一个aeraid的情况，比如死亡矿井里，主人是1581，bot是1582）
         if (bot->IsInWorld() && master->IsInWorld() && master->IsAlive() && bot->IsAlive() &&
             !bot->IsBeingTeleported() && !master->IsBeingTeleported())
         {
             if (!master->GetMap()->IsBattlegroundOrArena() && master->GetAreaId() != 2177 &&
                 master->GetAreaId() != 1741)
             {
-                if (master->GetAreaId() != bot->GetAreaId() || bot->GetDistance(master) > 200.0f)
+                if (master->GetAreaId() != bot->GetAreaId() && bot->GetDistance(master) > 200.0f)
                 {
+                    //LOG_ERROR("xx", "master->GetAreaId() {}  ", master->GetAreaId());            // 测试
+                    //LOG_ERROR("xx", "bot->GetAreaId() {}  ", bot->GetAreaId());                  // 测试
+                    //LOG_ERROR("xx", "bot->GetDistance(master) {}  ", bot->GetDistance(master));  // 测试
                     if (sPlayerbotAIConfig->summonWhenGroup)
                     {
                         bot->TeleportTo(master->GetMapId(), master->GetPositionX(), master->GetPositionY(),

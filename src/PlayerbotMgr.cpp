@@ -83,12 +83,13 @@ void PlayerbotHolder::AddPlayerBot(ObjectGuid playerGuid, uint32 masterAccountId
     Guild* guild = masterPlayer ? sGuildMgr->GetGuildById(masterPlayer->GetGuildId()) : nullptr;
     bool sameGuild = sPlayerbotAIConfig->allowGuildBots && guild && guild->GetMember(playerGuid); 
     bool addClassBot = sRandomPlayerbotMgr->IsAddclassBot(playerGuid.GetCounter());
+    bool admin = masterPlayer?masterPlayer->GetSession()->GetSecurity() >= SEC_GAMEMASTER:false;
 
     bool allowed = true;
     std::ostringstream out;
     std::string botName;
     sCharacterCache->GetCharacterNameByGuid(playerGuid, botName);
-    if (!isRndbot && !sameAccount && !sameGuild && !addClassBot)
+    if (!isRndbot && !sameAccount && !sameGuild && !addClassBot && !admin)
     {
         allowed = false;
         out << "Failure: You are not allowed to control bot " << botName.c_str();
@@ -562,6 +563,14 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     botAI->SetNextCheckDelay(urand(2000, 4000));
 
     botAI->TellMaster("Hello!", PLAYERBOT_SECURITY_TALK);
+
+    //判断bot是否有剩余天赋点没点，如果有就重置天赋
+    if (bot->GetFreeTalentPoints()>0)
+    {
+        PlayerbotFactory factory(bot, bot->GetLevel());
+        factory.ResetTalent();
+    }
+    //end --------------
 
     if (master && master->GetGroup() && !group)
     {
