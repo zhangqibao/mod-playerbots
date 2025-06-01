@@ -228,7 +228,18 @@ public:
         
         if (sPlayerbotAIConfig->playerbotsXPrate != 1.0)
         {
-            amount = static_cast<uint32>(std::round(static_cast<float>(amount) * sPlayerbotAIConfig->playerbotsXPrate));
+            
+            //如果机器人等级小于15级能排随机本之前才生效，否则就稳定保持当前等级
+            if (player->GetLevel()<15)
+            {
+                amount = static_cast<uint32>(std::round(static_cast<float>(amount) * sPlayerbotAIConfig->playerbotsXPrate));
+            }
+            else
+            {
+                amount = static_cast<uint32>(std::round(static_cast<float>(amount) * 0.0001));
+            }
+            
+            //amount = static_cast<uint32>(std::round(static_cast<float>(amount) * sPlayerbotAIConfig->playerbotsXPrate));
         }
     }
 };

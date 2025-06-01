@@ -284,17 +284,26 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
         // }
 
         // 如果主人和机器人不在一个地区且距离过远，传送到主人（有距离很近，但主人和AI不在一个aeraid的情况，比如死亡矿井里，主人是1581，bot是1582）
-        if (bot->IsInWorld() && master->IsInWorld() && master->IsAlive() && bot->IsAlive() &&
-            !bot->IsBeingTeleported() && !master->IsBeingTeleported())
+        //if (bot->IsInWorld() && master->IsInWorld() && master->IsAlive() && bot->IsAlive() &&
+        //    !bot->IsBeingTeleported() && !master->IsBeingTeleported() && !master->IsUsingLfg() &&
+        //    !bot->inRandomLfgDungeon())
+
+        Group* group = bot->GetGroup();
+
+         if (bot->IsInWorld() && master->IsInWorld() && master->IsAlive() && bot->IsAlive() &&
+            !bot->IsBeingTeleported() && !master->IsBeingTeleported() &&
+            (sLFGMgr->GetState(master->GetGUID()) < lfg::LFG_STATE_DUNGEON || (sLFGMgr->GetState(master->GetGUID()) >= lfg::LFG_STATE_DUNGEON && master->inRandomLfgDungeon())))
         {
             if (!master->GetMap()->IsBattlegroundOrArena() && master->GetAreaId() != 2177 &&
                 master->GetAreaId() != 1741)
             {
-                if (master->GetAreaId() != bot->GetAreaId() && bot->GetDistance(master) > 200.0f)
+                if ((master->GetAreaId() != bot->GetAreaId() && bot->GetDistance(master) > 200.0f) ||
+                    (master->GetMap()->IsDungeon() && !bot->GetMap()->IsDungeon()) ||
+                    (!master->GetMap()->IsDungeon() && bot->GetMap()->IsDungeon()) )
                 {
-                    //LOG_ERROR("xx", "master->GetAreaId() {}  ", master->GetAreaId());            // 测试
-                    //LOG_ERROR("xx", "bot->GetAreaId() {}  ", bot->GetAreaId());                  // 测试
-                    //LOG_ERROR("xx", "bot->GetDistance(master) {}  ", bot->GetDistance(master));  // 测试
+                    // LOG_ERROR("xx", "master->GetAreaId() {}  ", master->GetAreaId());            // 测试
+                    // LOG_ERROR("xx", "bot->GetAreaId() {}  ", bot->GetAreaId());                  // 测试
+                    // LOG_ERROR("xx", "bot->GetDistance(master) {}  ", bot->GetDistance(master));  // 测试
                     if (sPlayerbotAIConfig->summonWhenGroup)
                     {
                         bot->TeleportTo(master->GetMapId(), master->GetPositionX(), master->GetPositionY(),
@@ -324,7 +333,8 @@ void PlayerbotAI::UpdateAI(uint32 elapsed, bool minimal)
 
         //如果机器人进入战斗，让主人也加入战斗
         //if (bot->IsAlive() && bot->IsInCombat() && master->IsAlive() && !master->IsInCombat())
-        if (bot->IsAlive() && bot->IsInCombat() && master->IsAlive())
+        if (master->GetAreaId() == bot->GetAreaId() && bot->IsAlive() && bot->IsInCombat() && master->IsAlive() &&
+            !master->IsInCombat())
         {
             if (ObjectGuid const& _lasttarget = bot->GetLastDamagedTargetGuid())
             {
@@ -553,26 +563,9 @@ void PlayerbotAI::UpdateAIGroupMembership()
             _needquitteam = true;
         }
     }
+    /*
     else if (group->isLFGGroup())
     {
-        // 如果配置里的AiPlayerbot.GroupInvitationPermission = 0，仅允许GM邀请机器人，那么就直接退组
-        //LOG_ERROR("xx", "GetState {}  ", sLFGMgr->GetState(leader->GetGUID()));  // 测试
-
-        if (leader && leader->IsInWorld())
-        {
-            if (leaderAI && leaderAI->IsRealPlayer())
-            {
-                if (sPlayerbotAIConfig->groupInvitationPermission <= 0 && !leader->IsGameMaster() &&
-                    !leader->inRandomLfgDungeon() && !leader->IsBeingTeleported() && leader->GetMap() &&
-                    !leader->GetMap()->IsDungeon() && sLFGMgr->GetState(leader->GetGUID()) > lfg::LFG_STATE_NONE && !leader->isDead())
-                {
-                    _needquitteam = true;
-                     //LOG_ERROR("xx", "_needquitteam1 ");  // 测试
-                }
-            }
-        }
-        //end ----------------------------
-
         bool hasRealPlayer = false;
 
         // Iterate over all group members to check if at least one is a real player
@@ -584,36 +577,138 @@ void PlayerbotAI::UpdateAIGroupMembership()
 
             PlayerbotAI* memberAI = GET_PLAYERBOT_AI(member);
             if (memberAI && !memberAI->IsRealPlayer())
-            {
-                //LOG_ERROR("xx", "memberx {}  ", member->GetName());  // 测试
                 continue;
-            }
-                
 
-            if (!member->inRandomLfgDungeon() && !member->IsBeingTeleported() && member->GetMap() &&
-                !leader->GetMap()->IsDungeon() && sLFGMgr->GetState(member->GetGUID()) > lfg::LFG_STATE_NONE && !member->isDead())
-            {
-                //有真人，但真人不在随机本里，也设置为无真人
-                //LOG_ERROR("xx", "memberp {}  ", member->GetName());  // 测试
-                continue;
-            }
-            else
-            {
-                //LOG_ERROR("xx", "memberk {}  ", member->GetName());  // 测试
-                hasRealPlayer = true;
-            }
-            
-
+            hasRealPlayer = true;
             break;
         }
         if (!hasRealPlayer)
         {
             _needquitteam = true;
-            //LOG_ERROR("xx", "_needquitteam2 ");  // 测试
+        }
+    }
+    */
+    
+    else if (group->isLFGGroup())
+    {
+        // 看是否还有成员的状态为未进本
+        bool hasWaitingPlayer = false;
+
+        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        {
+            Player* member = ref->GetSource();
+            if (!member)
+                continue;
+
+            if (sLFGMgr->GetState(member->GetGUID()) >= lfg::LFG_STATE_DUNGEON)
+                continue;
+
+            hasWaitingPlayer = true;
+            break;
+        }
+        
+        // end --------------
+
+        //看是否队里有真人玩家
+        bool hasRealPlayer = false;
+
+        // Iterate over all group members to check if at least one is a real player
+        for (GroupReference* ref = group->GetFirstMember(); ref; ref = ref->next())
+        {
+            Player* member = ref->GetSource();
+            if (!member)
+                continue;
+
+            PlayerbotAI* memberAI = GET_PLAYERBOT_AI(member);
+            if (memberAI && !memberAI->IsRealPlayer())
+                continue;
+
+            hasRealPlayer = true;
+            break;
+        }
+        if (!hasRealPlayer)
+        {
+            _needquitteam = true;
+        }
+        //end --------------
+
+
+        
+        // 如果配置里的AiPlayerbot.GroupInvitationPermission = 0，仅允许GM邀请机器人，那么就直接退组
+        //LOG_ERROR("xx", "GetState {}  leader {} ", sLFGMgr->GetState(leader->GetGUID()), leader->GetName());  // 测试
+        if (leader && leader->IsInWorld())
+        {
+            if (leaderAI && !leaderAI->IsRealPlayer())
+            {
+                //donothing
+                LOG_ERROR("xx", "donothing leader{} bot {}", leader->GetName(), bot->GetName());  // 测试
+                
+                //如果leader是机器人，且所有队员状态是已接受进本了
+                if (!hasWaitingPlayer)
+                {
+                    //如果bot跑出随机本，就退队(会导致刚开始随机本时，一些因战斗中暂时未进本的机器人退队)
+                    if (master)
+                    {
+                        if (sPlayerbotAIConfig->groupInvitationPermission <= 0 && !master->IsGameMaster() &&
+                            !master->inRandomLfgDungeon() && !master->IsBeingTeleported() && master->GetMap() &&
+                            !master->GetMap()->IsDungeon() &&
+                            sLFGMgr->GetState(master->GetGUID()) >= lfg::LFG_STATE_DUNGEON && !master->isDead())
+                        {
+                            if (bot->GetMap() && !bot->GetMap()->IsDungeon() &&
+                                sLFGMgr->GetState(bot->GetGUID()) >= lfg::LFG_STATE_DUNGEON && !bot->isDead() &&
+                                !bot->IsBeingTeleported())
+                            {
+                                if (master->GetAreaId() == bot->GetAreaId())
+                                {
+                                    //如果机器人和主人都没在副本里，且再同一个area地区，说明是玩家带出本的机器人，要退队
+                                    _needquitteam = true;
+                                    LOG_ERROR("xx", "_needquitteamn1 leader{} bot {} botgetstate {} botGetMap {}",
+                                              leader->GetName(), bot->GetName(),
+                                              (uint32)sLFGMgr->GetState(bot->GetGUID()),
+                                              bot->GetMap()->GetId());  // 测试
+                                }
+
+                            }
+                        }
+                    }
+
+                }
+                
+            }
+            else
+            {
+                //如果队长在战斗中，会出现队长暂时没进随机本，然后机器人全部离队
+                if (!leader->IsInCombat())
+                {
+                    if (sPlayerbotAIConfig->groupInvitationPermission <= 0 && !leader->IsGameMaster() &&
+                        !leader->inRandomLfgDungeon() && !leader->IsBeingTeleported() && leader->GetMap() &&
+                        !leader->GetMap()->IsDungeon() &&
+                        sLFGMgr->GetState(leader->GetGUID()) >= lfg::LFG_STATE_DUNGEON && !leader->isDead())
+                    {
+                        if (bot->GetMap() && !bot->GetMap()->IsDungeon() &&
+                        sLFGMgr->GetState(bot->GetGUID()) >= lfg::LFG_STATE_DUNGEON && !bot->isDead() &&
+                        !bot->IsBeingTeleported() && !hasWaitingPlayer)
+                        {
+                            if (leader->GetAreaId() == bot->GetAreaId())
+                            {
+                                // 如果leader跑出副本了，bot也跑出副本了，才退队，用来避免刚启动随机本传送到副本时，leader还没传进去bot就进去导致的退队
+                                _needquitteam = true;
+                                LOG_ERROR("xx", "_needquitteam1 leader{} bot {}", leader->GetName(),
+                                          bot->GetName());  // 测试
+                            }
+
+                        }
+                    }
+                }
+
+            }
+            
         }
 
+        //end ----------------------------
     }
-
+    
+    
     if (_needquitteam == true)
     {
         bool randomBot = sRandomPlayerbotMgr->IsRandomBot(bot);
@@ -4418,6 +4513,14 @@ bool PlayerbotAI::AllowActive(ActivityType activityType)
     }
     // end -------------
 
+    /*
+    //如果机器人在GM岛或0的area就不动
+    if (bot->GetAreaId() == 0 || bot->GetAreaId() == 876)
+    {
+        return false;
+    }
+    // end -------------
+    */
 
     // when botActiveAlone is 100% and smartScale disabled
     if (sPlayerbotAIConfig->botActiveAlone >= 100 && !sPlayerbotAIConfig->botActiveAloneSmartScale)

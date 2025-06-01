@@ -498,6 +498,14 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     }
     //end ------------
 
+    //判断bot是否有剩余天赋点没点，如果有就重置天赋
+     if (bot->GetFreeTalentPoints()>0)
+    {
+         PlayerbotFactory factory(bot, bot->GetLevel());
+         factory.ResetTalent();
+     }
+    //end --------------
+
     Player* master = botAI->GetMaster();
     if (!master)
     {
@@ -563,14 +571,6 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     botAI->SetNextCheckDelay(urand(2000, 4000));
 
     botAI->TellMaster("Hello!", PLAYERBOT_SECURITY_TALK);
-
-    //判断bot是否有剩余天赋点没点，如果有就重置天赋
-    if (bot->GetFreeTalentPoints()>0)
-    {
-        PlayerbotFactory factory(bot, bot->GetLevel());
-        factory.ResetTalent();
-    }
-    //end --------------
 
     if (master && master->GetGroup() && !group)
     {

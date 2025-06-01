@@ -196,6 +196,15 @@ bool LfgJoinAction::JoinLFG()
     *data << _gs;
     bot->GetSession()->QueuePacket(data);
 
+    /*
+    //排随机副本后，传送，免得进入战斗
+    //LOG_ERROR("xx", "Teleport from {} {} {} To {}  ", bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(),bot->GetName());  // 测试
+    bot->ResetContestedPvP();
+    bot->SetPvP(false);
+    bot->TeleportTo(1, -8571, 2019, 103.4, 0);
+    //end -----------
+    */
+
     return true;
 }
 
@@ -238,6 +247,51 @@ bool LfgAcceptAction::Execute(Event event)
 
         if (bot->IsInCombat() || bot->isDead())
         {
+            
+            //如果战斗中或死亡了
+            if (bot->isDead())
+            {
+                bot->ResurrectPlayer(1.0f);
+                bot->SpawnCorpseBones();
+            }
+            if (bot->IsInCombat())
+            {
+                //脱战
+                //bot->RemoveSpellCooldown(5384);
+                //bot->CastSpell(bot, 5384, true);
+                //LOG_ERROR("xx", "botIsInCombat  {}", bot->GetName());  // 测试
+                bot->CastSpell(bot, 32612, true);  // 隐形15秒
+                //bot->CastSpell(bot, 1856, true);   // 消失
+
+            }
+
+             LOG_INFO("playerbots", "Bot {} {}:{} <{}> accepts LFG proposal {}", bot->GetGUID().ToString().c_str(),
+                     bot->GetTeamId() == TEAM_ALLIANCE ? "A" : "H", bot->GetLevel(), bot->GetName().c_str(), id);
+
+            botAI->GetAiObjectContext()->GetValue<uint32>("lfg proposal")->Set(0);
+
+            bot->ClearUnitState(UNIT_STATE_ALL_STATE);
+            WorldPacket* packet = new WorldPacket(CMSG_LFG_PROPOSAL_RESULT);
+            *packet << (uint32)id << (bool)true;
+            bot->GetSession()->QueuePacket(packet);
+            // sLFGMgr->UpdateProposal(id, bot->GetGUID(), true);
+
+            if (sRandomPlayerbotMgr->IsRandomBot(bot) && !bot->GetGroup())
+            {
+                sRandomPlayerbotMgr->Refresh(bot);
+                botAI->ResetStrategies();
+                // bot->TeleportToHomebind();
+            }
+
+            botAI->Reset();
+
+            return true;
+
+            //sRandomPlayerbotMgr->RandomTeleportForLevel(bot);
+
+           
+
+            /*
             LOG_INFO("playerbots", "Bot {} {}:{} <{}> is in combat and refuses LFG proposal {}",
                      bot->GetGUID().ToString().c_str(), bot->GetTeamId() == TEAM_ALLIANCE ? "A" : "H", bot->GetLevel(),
                      bot->GetName().c_str(), id);
@@ -246,6 +300,7 @@ bool LfgAcceptAction::Execute(Event event)
             bot->GetSession()->QueuePacket(packet);
             // sLFGMgr->UpdateProposal(id, bot->GetGUID(), true);
             return true;
+            */
         }
 
         LOG_INFO("playerbots", "Bot {} {}:{} <{}> accepts LFG proposal {}", bot->GetGUID().ToString().c_str(),
