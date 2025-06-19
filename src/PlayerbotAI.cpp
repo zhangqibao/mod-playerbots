@@ -641,7 +641,7 @@ void PlayerbotAI::UpdateAIGroupMembership()
             if (leaderAI && !leaderAI->IsRealPlayer())
             {
                 //donothing
-                LOG_ERROR("xx", "donothing leader{} bot {}", leader->GetName(), bot->GetName());  // 测试
+                //LOG_ERROR("xx", "donothing leader{} bot {}", leader->GetName(), bot->GetName());  // 测试
                 
                 //如果leader是机器人，且所有队员状态是已接受进本了
                 if (!hasWaitingPlayer)
@@ -662,10 +662,10 @@ void PlayerbotAI::UpdateAIGroupMembership()
                                 {
                                     //如果机器人和主人都没在副本里，且再同一个area地区，说明是玩家带出本的机器人，要退队
                                     _needquitteam = true;
-                                    LOG_ERROR("xx", "_needquitteamn1 leader{} bot {} botgetstate {} botGetMap {}",
-                                              leader->GetName(), bot->GetName(),
-                                              (uint32)sLFGMgr->GetState(bot->GetGUID()),
-                                              bot->GetMap()->GetId());  // 测试
+                                    //LOG_ERROR("xx", "_needquitteamn1 leader{} bot {} botgetstate {} botGetMap {}",
+                                    //          leader->GetName(), bot->GetName(),
+                                    //          (uint32)sLFGMgr->GetState(bot->GetGUID()),
+                                    //          bot->GetMap()->GetId());  // 测试
                                 }
 
                             }
@@ -693,8 +693,8 @@ void PlayerbotAI::UpdateAIGroupMembership()
                             {
                                 // 如果leader跑出副本了，bot也跑出副本了，才退队，用来避免刚启动随机本传送到副本时，leader还没传进去bot就进去导致的退队
                                 _needquitteam = true;
-                                LOG_ERROR("xx", "_needquitteam1 leader{} bot {}", leader->GetName(),
-                                          bot->GetName());  // 测试
+                                //LOG_ERROR("xx", "_needquitteam1 leader{} bot {}", leader->GetName(),
+                                //          bot->GetName());  // 测试
                             }
 
                         }
@@ -4531,10 +4531,13 @@ bool PlayerbotAI::AllowActive(ActivityType activityType)
     // Is in combat. Always defend yourself.
     if (activityType != OUT_OF_PARTY_ACTIVITY && activityType != PACKET_ACTIVITY)
     {
+        //即使是战斗中也不再激活bot
+        /*
         if (bot->IsInCombat())
         {
             return true;
         }
+        */
     }
 
     // only keep updating till initializing time has completed,
@@ -4640,6 +4643,8 @@ bool PlayerbotAI::AllowActive(ActivityType activityType)
         }
     }
 
+    /*
+    //就算在排战场和随机本也不允许激活
     // In bg queue. Speed up bg queue/join.
     if (bot->InBattlegroundQueue())
     {
@@ -4662,6 +4667,7 @@ bool PlayerbotAI::AllowActive(ActivityType activityType)
     {
         return true;
     }
+    */
 
     // HasFriend
     if (sPlayerbotAIConfig->BotActiveAloneForceWhenIsFriend)
@@ -4734,6 +4740,19 @@ bool PlayerbotAI::AllowActivity(ActivityType activityType, bool checkNow)
     bool allowed = AllowActive(activityType);
     allowActive[activityType] = allowed;
     allowActiveCheckTimer[activityType] = time(nullptr);
+
+    /*
+    if (allowed)
+    {
+        LOG_ERROR("xx", "AllowActivex activityType {} name {}  ", uint32(activityType), bot->GetName());  // 测试
+    }
+    else
+    {
+        //LOG_ERROR("xx", "NOTAllowActivex activityType {} name {}  ", uint32(activityType), bot->GetName());  // 测试
+    }
+    */
+        
+
     return allowed;
 }
 

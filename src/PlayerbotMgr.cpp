@@ -575,6 +575,30 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
     if (master && master->GetGroup() && !group)
     {
         Group* mgroup = master->GetGroup();
+
+        bool canaddbot = false;
+        // 看队伍人数
+        uint16 _grpbotsnum = 0;
+        if (mgroup)
+        {
+            for (GroupReference* itr = mgroup->GetFirstMember(); itr != nullptr; itr = itr->next())
+            {
+                Player* member = itr->GetSource();
+                if (!member)
+                    continue;
+
+                if (member->GetSession()->IsBot())
+                {
+                    _grpbotsnum = _grpbotsnum + 1;
+                }
+            }
+        }
+        if (_grpbotsnum < 4)  // 如果当前队伍不到4个机器人，就加入bot到master的队伍
+        {
+            canaddbot = true;
+        }
+        //end ----------------
+        
         if (mgroup->GetMembersCount() >= 5)
         {
             if (!mgroup->isRaidGroup() && !mgroup->isLFGGroup() && !mgroup->isBGGroup() && !mgroup->isBFGroup())
@@ -583,12 +607,14 @@ void PlayerbotHolder::OnBotLogin(Player* const bot)
             }
             if (mgroup->isRaidGroup())
             {
-                mgroup->AddMember(bot);
+                if (canaddbot)
+                    mgroup->AddMember(bot);
             }
         }
         else
         {
-            mgroup->AddMember(bot);
+            if (canaddbot)
+                mgroup->AddMember(bot);
         }
     }
     else if (master && !group)

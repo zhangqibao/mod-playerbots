@@ -74,6 +74,16 @@ bool AcceptInvitationAction::Execute(Event event)
                 }
             }
         }
+        if (_grpbotsnum > 3)  // 如果当前队伍已经有3个或3个以上的机器人了，就不接受，>3表示允许组4个机器人
+        {
+            std::ostringstream out;
+            out << "Team Robot is full.";
+            std::string const text = out.str();
+            // LOG_ERROR("xx", "Whisper leader {}", inviter->GetGUID().GetCounter());//测试
+            bot->Whisper(text, LANG_UNIVERSAL, inviter);
+            bot->UninviteFromGroup();
+            return false;
+        }
         /*
         //如果已经召唤了账号下的机器人，计算数量
         PlayerbotMgr* inviterBotMgr = nullptr;
@@ -124,16 +134,7 @@ bool AcceptInvitationAction::Execute(Event event)
             return false;
         }
         */
-        if (_grpbotsnum > 3)  // 如果当前队伍已经有3个或3个以上的机器人了，就不接受，>3表示允许组4个机器人
-        {
-            std::ostringstream out;
-            out << "Team Robot is full.";
-            std::string const text = out.str();
-            // LOG_ERROR("xx", "Whisper leader {}", inviter->GetGUID().GetCounter());//测试
-            bot->Whisper(text, LANG_UNIVERSAL, inviter);
-            bot->UninviteFromGroup();
-            return false;
-        }
+
     }
 
 
