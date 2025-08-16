@@ -104,7 +104,7 @@ void TankPaladinStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         new TriggerNode("target critical health",
                         NextAction::array(0, new NextAction("hammer of wrath", ACTION_CRITICAL_HEAL), nullptr)));
     triggers.push_back(new TriggerNode(
-        "righteous fury", NextAction::array(0, new NextAction("righteous fury", ACTION_HIGH + 8), nullptr)));
+        "righteous fury", NextAction::array(0, new NextAction("righteous fury", ACTION_HIGH + 1), nullptr)));
     triggers.push_back(
         new TriggerNode("medium group heal setting",
                         NextAction::array(0, new NextAction("divine sacrifice", ACTION_HIGH + 5), nullptr)));

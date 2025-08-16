@@ -290,6 +290,18 @@ bool LootObject::IsLootPossible(Player* bot)
     if (abs(worldObj->GetPositionZ() - bot->GetPositionZ()) > INTERACTION_DISTANCE -2.0f)
         return false;
 
+    // 判断object是否是可拾取状态的
+    GameObject* go = botAI->GetGameObject(guid);
+    if (go)
+    {
+        if (go->getLootState() != GO_ACTIVATED)
+        {
+            return false;
+        }
+    }
+
+    // end ---------------
+
     Creature* creature = botAI->GetCreature(guid);
     if (creature && creature->getDeathState() == DeathState::Corpse)
     {
